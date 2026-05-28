@@ -18,7 +18,6 @@ body{
   min-height:100vh;
 }
 
-/* SIDEBAR */
 .sidebar{
   width:260px;
   background:rgba(18,25,35,0.95);
@@ -64,7 +63,6 @@ body{
   cursor:pointer;
 }
 
-/* MAIN */
 .main{
   flex:1;
   padding:2rem;
@@ -138,6 +136,7 @@ textarea{
 }
 
 .btn:hover{opacity:0.9;}
+.btn:disabled{opacity:0.6;cursor:not-allowed;}
 
 .note{
   margin-top:1rem;
@@ -147,6 +146,17 @@ textarea{
 }
 
 .hidden{display:none;}
+
+.success-msg{
+  background:rgba(16,185,129,0.15);
+  border:1px solid rgba(16,185,129,0.4);
+  color:#6ee7b7;
+  padding:0.8rem;
+  border-radius:12px;
+  text-align:center;
+  display:none;
+  margin-bottom:1rem;
+}
 </style>
 </head>
 <body>
@@ -156,7 +166,7 @@ textarea{
     <div class="logo">Crimson<span>Shield</span></div>
     <div class="nav">
       <button onclick="goDashboard()">Dashboard</button>
-      <button onclick="goEligibility()">Update Eligibility</button>
+      <button class="active" onclick="goEligibility()">Update Eligibility</button>
       <button onclick="goRewards()">Rewards</button>
       <button onclick="goFeedback()">Feedback</button>
       <button onclick="goProfile()">Profile</button>
@@ -169,6 +179,8 @@ textarea{
 
   <div class="card">
     <h2>Update Donation Eligibility</h2>
+
+    <div class="success-msg" id="successMsg">Eligibility status updated and admin notified.</div>
 
     <div class="warning-box">
       If you are currently unwell or medically advised not to donate,
@@ -200,7 +212,7 @@ textarea{
     <label>Additional Notes (Optional)</label>
     <textarea id="notes" placeholder="Add any additional information..."></textarea>
 
-    <button class="btn" onclick="submitStatus()">Notify Admin</button>
+    <button class="btn" id="submitBtn" onclick="submitStatus()">Notify Admin</button>
 
     <div class="note">
       You will automatically be marked as unavailable for blood requests.
@@ -210,49 +222,74 @@ textarea{
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
 <script>
 
+let currentUserId = null;
+
+requireDonorAuth(function(session, profile) {
+  currentUserId = session.user.id;
+});
+
 function toggleDate(show){
-  const box=document.getElementById("recoveryDateBox");
-  box.classList.toggle("hidden",!show);
+  document.getElementById("recoveryDateBox").classList.toggle("hidden", !show);
 }
 
-function submitStatus(){
-  const reason=document.getElementById("reason").value;
-  const type=document.querySelector('input[name="type"]:checked');
+async function submitStatus(){
+  const reason = document.getElementById("reason").value;
+  const type = document.querySelector('input[name="type"]:checked');
+  const notes = document.getElementById("notes").value.trim();
+  const btn = document.getElementById("submitBtn");
 
   if(!reason || !type){
     alert("Please select reason and status type.");
     return;
   }
 
-  alert("Your eligibility status has been updated. Admin has been notified.");
+  btn.disabled = true;
+  btn.textContent = "Updating…";
+
+  try {
+    // Mark donor as unavailable
+    const { error } = await supabaseClient
+      .from("donors")
+      .update({
+        is_available: false
+      })
+      .eq("user_id", currentUserId);
+
+    if (error) {
+      alert("Error updating status: " + error.message);
+      btn.disabled = false;
+      btn.textContent = "Notify Admin";
+      return;
+    }
+
+    document.getElementById("successMsg").style.display = "block";
+    btn.textContent = "Updated ✓";
+
+    setTimeout(function() {
+      btn.disabled = false;
+      btn.textContent = "Notify Admin";
+      document.getElementById("successMsg").style.display = "none";
+    }, 3000);
+
+  } catch (err) {
+    alert("Network error. Please try again.");
+    btn.disabled = false;
+    btn.textContent = "Notify Admin";
+  }
 }
 
-/* ✅ UPDATED NAVIGATION */
-function goDashboard(){
-  window.location.href="donor-dashboard.html";
-}
-
-function goEligibility(){
-  window.location.href="update-health.html";
-}
-
-function goProfile(){
-  window.location.href="donor-profile.html";
-}
-
-function goRewards(){
-  window.location.href="donor-rewards.html";
-}
-
-function goFeedback(){
-  window.location.href="donor-feedback.html";
-}
-
-function logout(){
-  window.location.href="index.html";
-}
+function goDashboard(){ window.location.href="donor-dashboard.html"; }
+function goEligibility(){ window.location.href="update-health.html"; }
+function goProfile(){ window.location.href="donor-profile.html"; }
+function goRewards(){ window.location.href="donor-rewards.html"; }
+function goFeedback(){ window.location.href="donor-feedback.html"; }
+function logout(){ performLogout("../index.html"); }
 
 </script>
 

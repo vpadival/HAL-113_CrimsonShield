@@ -87,6 +87,12 @@
       box-shadow: 0 15px 35px rgba(220,38,38,0.6);
     }
 
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .register {
       text-align: center;
       margin-top: 1rem;
@@ -99,6 +105,16 @@
       text-decoration: none;
     }
 
+    .error-msg {
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: #fca5a5;
+      padding: 0.8rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -111,6 +127,8 @@
 
     <h2>👤 Donor Login</h2>
 
+    <div class="error-msg" id="errorMsg"></div>
+
     <form id="loginForm">
       <div class="input-group">
         <label>Email</label>
@@ -122,42 +140,58 @@
         <input type="password" id="password" placeholder="Enter password" required>
       </div>
     
-      <button type="submit" class="btn">Login as Donor</button>
+      <button type="submit" class="btn" id="loginBtn">Login as Donor</button>
     </form>
 
     <div class="register">
-      Don’t have an account? <a href="donor-sign.html">Register Here</a>
+      Don't have an account? <a href="donor-sign.html">Register Here</a>
     </div>
 
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-config.js"></script>
 
   <script>
-  const supabaseUrl = "https://lkflnzxcbwlmxounerex.supabase.co";
-  const supabaseKey = "sb_publishable_SqucPk5SOnBhLL6goXwxIQ_jDVlIy3x";
-  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-  
+  // If already logged in, go straight to dashboard
+  (async function checkExisting() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) window.location.href = "donor-dashboard.html";
+  })();
+
   document.getElementById("loginForm").addEventListener("submit", async function(e) {
-  
     e.preventDefault();
-  
-    const email = document.getElementById("email").value;
+
+    const btn = document.getElementById("loginBtn");
+    const errEl = document.getElementById("errorMsg");
+    errEl.style.display = "none";
+    btn.disabled = true;
+    btn.textContent = "Logging in…";
+
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
-  
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
-  
-    if (error) {
-      alert("Login Failed: " + error.message);
-      return;
+
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) {
+        errEl.textContent = error.message;
+        errEl.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Login as Donor";
+        return;
+      }
+
+      window.location.href = "donor-dashboard.html";
+    } catch (err) {
+      errEl.textContent = "Network error. Please try again.";
+      errEl.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "Login as Donor";
     }
-  
-    alert("Login successful!");
-  
-    // Redirect to dashboard
-    window.location.href = "donor-dashboard.html";
   });
   </script>
   

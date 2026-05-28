@@ -125,6 +125,8 @@ th, td {
   border-bottom:1px solid rgba(255,255,255,0.05);
 }
 th { font-size:0.85rem; color:#94a3b8; }
+
+.loading-text { color:#94a3b8; font-size:0.9rem; }
 </style>
 </head>
 
@@ -147,7 +149,7 @@ th { font-size:0.85rem; color:#94a3b8; }
 <div class="main">
 
   <div class="header">
-    <h1>Welcome, Ravi 👋</h1>
+    <h1 id="welcomeMsg">Welcome 👋</h1>
     <span class="status-badge" id="headerStatus" style="background:#10b981;color:#0b1219;">
       Available
     </span>
@@ -155,12 +157,8 @@ th { font-size:0.85rem; color:#94a3b8; }
 
   <div class="card">
     <h3>🚨 Active Blood Requests</h3>
-    <div class="alert">
-      <strong>Blood Required</strong><br/>
-      City Hospital · 2 Units
-      <br/><br/>
-      <button class="btn accept" onclick="respond('accepted')">Accept</button>
-      <button class="btn decline" onclick="respond('declined')">Decline</button>
+    <div id="requestsContainer">
+      <p class="loading-text">Loading requests…</p>
     </div>
   </div>
 
@@ -190,58 +188,168 @@ th { font-size:0.85rem; color:#94a3b8; }
   <div class="card">
     <h3>🩸 Recent Donations</h3>
     <table>
-      <tr>
-        <th>Date</th>
-        <th>Hospital</th>
-        <th>Blood Group</th>
-      </tr>
-      <tr>
-        <td>12 Jan 2026</td>
-        <td>City Hospital</td>
-        <td>O+</td>
-      </tr>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Hospital</th>
+          <th>Blood Group</th>
+        </tr>
+      </thead>
+      <tbody id="donationsBody">
+        <tr><td colspan="3" class="loading-text">Loading…</td></tr>
+      </tbody>
     </table>
   </div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
 <script>
+let currentUserId = null;
 let availabilityTimer;
 
-function setAvailable(){
-  document.getElementById("availabilityText").innerText =
-    "Current Status: Available for Emergency Calls";
-  document.getElementById("availabilityText").style.color="#10b981";
-  document.getElementById("headerStatus").style.background="#10b981";
-  document.getElementById("headerStatus").style.color="#0b1219";
-  document.getElementById("headerStatus").innerText="Available";
-  clearTimeout(availabilityTimer);
+requireDonorAuth(async function(session, profile) {
+  currentUserId = session.user.id;
+  const name = profile ? profile.name : session.user.email;
+  document.getElementById("welcomeMsg").textContent = "Welcome, " + name + " 👋";
+
+  // Set initial availability UI
+  if (profile && profile.is_available === false) {
+    updateAvailabilityUI(false);
+  }
+
+  // Load blood requests
+  loadRequests();
+
+  // Load recent donations
+  loadDonations();
+});
+
+async function loadRequests() {
+  const container = document.getElementById("requestsContainer");
+  try {
+    const { data, error } = await supabaseClient
+      .from("blood_requests")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      container.innerHTML = '<p class="loading-text">No active requests right now.</p>';
+      return;
+    }
+
+    container.innerHTML = data.map(function(req) {
+      return '<div class="alert">' +
+        '<strong>' + req.blood_group + ' Blood Required</strong><br/>' +
+        (req.hospital_name || 'Hospital') + ' · ' + req.units + ' Units' +
+        '<br/><br/>' +
+        '<button class="btn accept" onclick="respond(\'' + req.id + '\', \'accepted\')">Accept</button>' +
+        '<button class="btn decline" onclick="respond(\'' + req.id + '\', \'declined\')">Decline</button>' +
+      '</div>';
+    }).join("");
+  } catch (err) {
+    container.innerHTML = '<p class="loading-text">No active requests right now.</p>';
+  }
 }
 
-function setNotAvailable(){
-  const selectedTime = parseInt(document.getElementById("timeSelect").value);
+async function loadDonations() {
+  const tbody = document.getElementById("donationsBody");
+  try {
+    const { data, error } = await supabaseClient
+      .from("blood_requests")
+      .select("*")
+      .eq("status", "fulfilled")
+      .order("created_at", { ascending: false })
+      .limit(5);
 
-  document.getElementById("availabilityText").innerText =
-    "Current Status: Not Available";
-  document.getElementById("availabilityText").style.color="#f87171";
-  document.getElementById("headerStatus").style.background="#ef4444";
-  document.getElementById("headerStatus").style.color="white";
-  document.getElementById("headerStatus").innerText="Not Available";
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="loading-text">No donations recorded yet.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(function(d) {
+      var date = new Date(d.created_at).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
+      return '<tr><td>' + date + '</td><td>' + (d.hospital_name || '—') + '</td><td>' + d.blood_group + '</td></tr>';
+    }).join("");
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="3" class="loading-text">No donations recorded yet.</td></tr>';
+  }
+}
+
+async function respond(requestId, status) {
+  try {
+    await supabaseClient
+      .from("blood_requests")
+      .update({ status: status })
+      .eq("id", requestId);
+    alert("You have " + status + " the request.");
+    loadRequests();
+  } catch (err) {
+    alert("Error updating request.");
+  }
+}
+
+async function setAvailable() {
+  clearTimeout(availabilityTimer);
+  updateAvailabilityUI(true);
+
+  if (currentUserId) {
+    await supabaseClient
+      .from("donors")
+      .update({ is_available: true })
+      .eq("user_id", currentUserId);
+  }
+}
+
+async function setNotAvailable() {
+  const selectedTime = parseInt(document.getElementById("timeSelect").value);
+  updateAvailabilityUI(false);
+
+  if (currentUserId) {
+    await supabaseClient
+      .from("donors")
+      .update({ is_available: false })
+      .eq("user_id", currentUserId);
+  }
 
   clearTimeout(availabilityTimer);
   availabilityTimer = setTimeout(setAvailable, selectedTime);
 }
 
-function respond(status){ alert("You have " + status + " the request."); }
+function updateAvailabilityUI(available) {
+  const badge = document.getElementById("headerStatus");
+  const text = document.getElementById("availabilityText");
+  if (available) {
+    text.innerText = "Current Status: Available for Emergency Calls";
+    text.style.color = "#10b981";
+    badge.style.background = "#10b981";
+    badge.style.color = "#0b1219";
+    badge.innerText = "Available";
+  } else {
+    text.innerText = "Current Status: Not Available";
+    text.style.color = "#f87171";
+    badge.style.background = "#ef4444";
+    badge.style.color = "white";
+    badge.innerText = "Not Available";
+  }
+}
 
-/* ✅ UPDATED NAVIGATION */
+/* Navigation */
 function goDashboard(){ window.location.href="donor-dashboard.html"; }
 function goEligibility(){ window.location.href="update-health.html"; }
 function goProfile(){ window.location.href="donor-profile.html"; }
 function goRewards(){ window.location.href="donor-rewards.html"; }
 function goFeedback(){ window.location.href="donor-feedback.html"; }
-function logout(){ window.location.href="index.html"; }
-
+function logout(){ performLogout("../index.html"); }
 </script>
 
 </body>

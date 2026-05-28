@@ -111,6 +111,12 @@ button:hover{
     box-shadow: 0 15px 35px rgba(220,38,38,0.6);
 }
 
+button:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+    transform:none;
+}
+
 .footer{
     margin-top:1.5rem;
     text-align:center;
@@ -121,6 +127,16 @@ button:hover{
 .footer a{
     color:#dc2626;
     text-decoration:none;
+}
+
+.error-msg {
+    background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.4);
+    color: #fca5a5;
+    padding: 0.8rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    display: none;
 }
 </style>
 </head>
@@ -135,6 +151,8 @@ button:hover{
 
     <div class="subtitle">🩸 Become a Life Saver Today</div>
 
+    <div class="error-msg" id="errorMsg"></div>
+
     <form id="donorForm">
 
         <div>
@@ -145,7 +163,12 @@ button:hover{
         <div class="row">
             <div>
                 <label>Gender</label>
-                <input type="text" id="gender" required>
+                <select id="gender" required>
+                    <option value="">Select</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                </select>
             </div>
             <div>
                 <label>Blood Group</label>
@@ -175,10 +198,10 @@ button:hover{
     
         <div>
             <label>Password</label>
-            <input type="password" id="password" placeholder="Create password" required>
+            <input type="password" id="password" placeholder="Create password (min 6 characters)" minlength="6" required>
         </div>
     
-        <button type="submit">Register as Donor</button>
+        <button type="submit" id="signupBtn">Register as Donor</button>
     
     </form>
     <div class="footer">
@@ -187,69 +210,87 @@ button:hover{
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
 
 <script>
 
-const supabaseUrl = "https://lkflnzxcbwlmxounerex.supabase.co";
-const supabaseKey = "sb_publishable_SqucPk5SOnBhLL6goXwxIQ_jDVlIy3x";
-
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-console.log("Supabase Client Created");
-
-
-// 🔴 ADD THE SIGNUP LOGIC HERE
 document.getElementById("donorForm").addEventListener("submit", async function(e) {
-
     e.preventDefault();
 
-    const name = document.getElementById("name").value;
+    const btn = document.getElementById("signupBtn");
+    const errEl = document.getElementById("errorMsg");
+    errEl.style.display = "none";
+    btn.disabled = true;
+    btn.textContent = "Registering…";
+
+    const name = document.getElementById("name").value.trim();
     const gender = document.getElementById("gender").value;
     const blood_group = document.getElementById("blood_group").value;
-    const phone = document.getElementById("phone").value;
-    const email = document.getElementById("email").value;
+    const phone = document.getElementById("phone").value.trim();
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
-    const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-        email: email,
-        password: password
-    });
+    try {
+        // 1. Create auth user
+        const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+            email: email,
+            password: password
+        });
 
-    if (authError) {
-        alert("Signup Error: " + authError.message);
-        return;
-    }
+        if (authError) {
+            errEl.textContent = "Signup Error: " + authError.message;
+            errEl.style.display = "block";
+            btn.disabled = false;
+            btn.textContent = "Register as Donor";
+            return;
+        }
 
-    // Get Live Location and Insert Donor
-navigator.geolocation.getCurrentPosition(async function(position) {
+        // 2. Get location (with fallback)
+        let latitude = null;
+        let longitude = null;
 
-    const latitude = position.coords.latitude;
-    const longitude = position.coords.longitude;
+        try {
+            const pos = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
+            });
+            latitude = pos.coords.latitude;
+            longitude = pos.coords.longitude;
+        } catch (geoErr) {
+            console.warn("Geolocation unavailable, registering without location:", geoErr.message);
+        }
 
-    const { error: insertError } = await supabaseClient
-        .from("donors")
-        .insert([
-            {
+        // 3. Insert donor profile
+        const { error: insertError } = await supabaseClient
+            .from("donors")
+            .insert([{
                 user_id: authData.user.id,
                 name: name,
+                gender: gender,
                 phone: phone,
+                email: email,
                 blood_group: blood_group,
                 latitude: latitude,
                 longitude: longitude,
                 is_available: true
-            }
-        ]);
+            }]);
 
-    if (insertError) {
-        alert("Insert Error: " + insertError.message);
-        return;
+        if (insertError) {
+            errEl.textContent = "Profile save error: " + insertError.message;
+            errEl.style.display = "block";
+            btn.disabled = false;
+            btn.textContent = "Register as Donor";
+            return;
+        }
+
+        alert("Donor registered successfully! Please log in.");
+        window.location.href = "user-login.html";
+
+    } catch (err) {
+        errEl.textContent = "Network error. Please try again.";
+        errEl.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Register as Donor";
     }
-
-    alert("Donor registered with location!");
-});
-
-    alert("Donor registered successfully!");
-
 });
 
 </script>
