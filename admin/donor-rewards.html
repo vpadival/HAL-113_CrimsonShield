@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Donor Rewards · Crimson Shield</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  background:linear-gradient(135deg,#0b1219 0%,#151f2c 100%);
+  color:#e2e8f0;
+  display:flex;
+  min-height:100vh;
+}
+
+.sidebar{
+  width:260px;
+  background:rgba(18,25,35,0.95);
+  border-right:1px solid rgba(220,38,38,0.2);
+  padding:2rem 1.5rem;
+  display:flex;
+  flex-direction:column;
+}
+
+.logo{
+  font-size:1.6rem;
+  font-weight:800;
+  margin-bottom:3rem;
+}
+.logo span{color:#dc2626;}
+
+.nav button{
+  width:100%;
+  padding:1rem;
+  margin-bottom:1rem;
+  border:none;
+  border-radius:15px;
+  background:transparent;
+  color:#94a3b8;
+  text-align:left;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.nav button:hover,
+.nav button.active{
+  background:rgba(220,38,38,0.15);
+  color:white;
+}
+
+.logout{
+  margin-top:auto;
+  background:#dc2626;
+  border:none;
+  padding:0.8rem;
+  border-radius:15px;
+  color:white;
+  cursor:pointer;
+}
+
+.main{
+  flex:1;
+  padding:2rem;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:2rem;
+  flex-wrap:wrap;
+  gap:1rem;
+}
+
+.badge{
+  background:#10b981;
+  padding:0.4rem 1rem;
+  border-radius:20px;
+  font-size:0.8rem;
+  color:#0b1219;
+  font-weight:600;
+}
+
+.rewards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:1.5rem;
+}
+
+.reward-card{
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(220,38,38,0.2);
+  border-radius:20px;
+  padding:1.5rem;
+  transition:0.3s;
+}
+
+.reward-card:hover{
+  transform:translateY(-5px);
+  border-color:#dc2626;
+}
+
+.reward-card h3{
+  margin-bottom:0.5rem;
+}
+
+.reward-card p{
+  font-size:0.9rem;
+  color:#94a3b8;
+  margin-bottom:1rem;
+}
+
+.btn{
+  background:linear-gradient(145deg,#dc2626,#b91c1c);
+  color:white;
+  padding:0.6rem 1.2rem;
+  border:none;
+  border-radius:20px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.btn:hover{opacity:0.9;}
+
+.subsidy-box{
+  margin-top:2rem;
+  background:rgba(16,185,129,0.1);
+  border:1px solid #10b981;
+  padding:1.5rem;
+  border-radius:20px;
+}
+
+.donation-count{
+  background:rgba(220,38,38,0.1);
+  border:1px solid rgba(220,38,38,0.3);
+  padding:1rem 1.5rem;
+  border-radius:15px;
+  margin-bottom:2rem;
+  font-size:0.95rem;
+}
+
+.donation-count strong{
+  color:#dc2626;
+  font-size:1.3rem;
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div>
+    <div class="logo">Crimson<span>Shield</span></div>
+    <div class="nav">
+      <button onclick="goDashboard()">Dashboard</button>
+      <button onclick="goEligibility()">Update Eligibility</button>
+      <button class="active" onclick="goRewards()">Rewards</button>
+      <button onclick="goFeedback()">Feedback</button>
+      <button onclick="goProfile()">Profile</button>
+    </div>
+  </div>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<div class="main">
+
+  <div class="header">
+    <h1>🎉 Donor Rewards & Benefits</h1>
+    <span class="badge" id="badgeText">Loading…</span>
+  </div>
+
+  <div class="donation-count" id="donationInfo">
+    Checking your donation history…
+  </div>
+
+  <div class="rewards-grid">
+
+    <div class="reward-card">
+      <h3>🛒 15% Grocery Discount</h3>
+      <p>Valid at partnered supermarkets for 30 days.</p>
+      <button class="btn" onclick="redeem('Grocery Discount')">Redeem Coupon</button>
+    </div>
+
+    <div class="reward-card">
+      <h3>💊 20% Pharmacy Discount</h3>
+      <p>Applicable on medicines & health supplements.</p>
+      <button class="btn" onclick="redeem('Pharmacy Discount')">Redeem Coupon</button>
+    </div>
+
+    <div class="reward-card">
+      <h3>🛍 ₹500 Shopping Voucher</h3>
+      <p>Usable on selected online platforms.</p>
+      <button class="btn" onclick="redeem('Shopping Voucher')">Redeem Coupon</button>
+    </div>
+
+    <div class="reward-card">
+      <h3>🩺 Free Health Checkup</h3>
+      <p>Basic blood panel + consultation subsidy.</p>
+      <button class="btn" onclick="redeem('Health Checkup')">Claim Benefit</button>
+    </div>
+
+  </div>
+
+  <div class="subsidy-box">
+    <h3>🏥 Government Subsidy Program</h3>
+    <p>
+      As a registered voluntary donor, you are eligible for:
+      <br>• Priority emergency medical assistance
+      <br>• Subsidized insurance coverage
+      <br>• Annual wellness checkups
+    </p>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+
+requireDonorAuth(async function(session, profile) {
+  // Count fulfilled donations for this user's blood group
+  try {
+    const { data, error } = await supabaseClient
+      .from("blood_requests")
+      .select("id")
+      .eq("status", "fulfilled");
+
+    const count = (data && !error) ? data.length : 0;
+    document.getElementById("donationInfo").innerHTML =
+      "Total donations recorded: <strong>" + count + "</strong>";
+
+    if (count >= 1) {
+      document.getElementById("badgeText").textContent = "Unlocked — " + count + " Donation" + (count > 1 ? "s" : "");
+    } else {
+      document.getElementById("badgeText").textContent = "Locked — Donate to unlock rewards";
+      document.getElementById("badgeText").style.background = "#374151";
+      document.getElementById("badgeText").style.color = "#9ca3af";
+    }
+  } catch (err) {
+    document.getElementById("donationInfo").textContent = "Could not load donation data.";
+    document.getElementById("badgeText").textContent = "—";
+  }
+});
+
+function redeem(type){
+  alert(type + " successfully redeemed! Coupon sent to your email.");
+}
+
+function goDashboard(){ window.location.href="donor-dashboard.html"; }
+function goEligibility(){ window.location.href="update-health.html"; }
+function goProfile(){ window.location.href="donor-profile.html"; }
+function goRewards(){ window.location.href="donor-rewards.html"; }
+function goFeedback(){ window.location.href="donor-feedback.html"; }
+function logout(){ performLogout("../index.html"); }
+
+</script>
+
+</body>
+</html>

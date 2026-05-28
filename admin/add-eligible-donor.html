@@ -150,6 +150,12 @@ body{
   transform:translateY(-2px);
 }
 
+.btn:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+  transform:none;
+}
+
 /* CSV DROP ZONE */
 .drop-zone{
   border:2px dashed rgba(220,38,38,0.6);
@@ -164,6 +170,26 @@ body{
   background:rgba(220,38,38,0.1);
   border-color:#dc2626;
 }
+
+.error-msg{
+  color:#ef4444;
+  font-size:0.85rem;
+  margin-bottom:1rem;
+  display:none;
+}
+
+.success-msg{
+  color:#10b981;
+  font-size:0.85rem;
+  margin-bottom:1rem;
+  display:none;
+}
+
+.csv-results{
+  margin-top:1rem;
+  font-size:0.85rem;
+  color:#94a3b8;
+}
 </style>
 </head>
 
@@ -175,7 +201,7 @@ body{
 
     <div class="nav">
       <button onclick="goDashboard()">Dashboard</button>
-      <button onclick="goAddDonor()">Add Donor</button>
+      <button class="active" onclick="goAddDonor()">Add Donor</button>
       <button onclick="goFindBlood()">Find Blood</button>
       <button onclick="goTrackDonor()">Track Donor</button>
       <button onclick="goAnalytics()">Analytics</button>
@@ -184,7 +210,7 @@ body{
   </div>
 
   <div class="sidebar-footer">
-    <button class="logout" onclick="logout()">Logout</button>
+    <button class="logout" onclick="performLogout('../index.html')">Logout</button>
   </div>
 </div>
 
@@ -196,6 +222,8 @@ body{
 
   <!-- MANUAL ENTRY -->
   <div class="card">
+    <div id="formError" class="error-msg"></div>
+    <div id="formSuccess" class="success-msg"></div>
 
     <label>Donor Name</label>
     <input type="text" id="name">
@@ -220,8 +248,11 @@ body{
       <option>O+</option>
       <option>O-</option>
       <option>A+</option>
+      <option>A-</option>
       <option>B+</option>
+      <option>B-</option>
       <option>AB+</option>
+      <option>AB-</option>
     </select>
 
     <label>Last Donation Date</label>
@@ -235,8 +266,7 @@ body{
     </div>
 
     <div class="button-center">
-      <!-- ✅ MODIFICATION: addDonor() now redirects to donor-success.html -->
-      <button class="btn" onclick="addDonor()">Add Donor</button>
+      <button class="btn" id="addBtn" onclick="addDonor()">Add Donor</button>
     </div>
 
   </div>
@@ -244,62 +274,213 @@ body{
   <!-- CSV UPLOAD -->
   <div class="card">
     <h3>Upload Donors via CSV</h3>
+    <p style="color:#64748b;font-size:0.8rem;margin:0.5rem 0 1rem;">
+      CSV columns: name, email, phone, gender, blood_group, last_donation_date
+    </p>
 
-    <div class="drop-zone" id="dropZone">
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvFile').click()">
       Drag & Drop CSV file here<br>or Click to Select
       <input type="file" id="csvFile" accept=".csv" hidden>
     </div>
+    <div class="csv-results" id="csvResults"></div>
   </div>
 
 </div>
 
+<!-- Supabase SDK + shared config + auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
 <script>
-  function goDashboard(){
-    window.location.href="admin-dashboard.html";
+/* ── Navigation ── */
+function goDashboard()  { window.location.href="admin-dashboard.html"; }
+function goAddDonor()   { window.location.href="add-eligible-donor.html"; }
+function goFindBlood()  { window.location.href="contact-network.html"; }
+function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
+function goAnalytics()  { window.location.href="analytics.html"; }
+function goProfile()    { window.location.href="admin-profile.html"; }
+
+/* ── Auth guard ── */
+requireAdminAuth();
+
+/* ── Set max date ── */
+document.getElementById("lastDonation").max = new Date().toISOString().split("T")[0];
+
+/* ── Validation helpers ── */
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function checkDonationEligibility(dateStr) {
+  if (!dateStr) return true;
+  const last  = new Date(dateStr);
+  const today = new Date();
+  const diff  = (today - last) / (1000 * 60 * 60 * 24);
+  return diff >= 90;
+}
+
+/* ── Add single donor ── */
+async function addDonor() {
+  const errEl = document.getElementById("formError");
+  const sucEl = document.getElementById("formSuccess");
+  errEl.style.display = "none";
+  sucEl.style.display = "none";
+
+  const name    = document.getElementById("name").value.trim();
+  const email   = document.getElementById("email").value.trim();
+  const phone   = document.getElementById("phone").value.trim();
+  const gender  = document.getElementById("gender").value;
+  const blood   = document.getElementById("blood").value;
+  const lastDon = document.getElementById("lastDonation").value;
+  const consent = document.getElementById("medicalConsent").checked;
+
+  // Validation
+  if (!name || !email || !phone || !gender || !blood) {
+    errEl.textContent = "Please fill in all required fields.";
+    errEl.style.display = "block";
+    return;
   }
-  
-  function goAddDonor(){
-    window.location.href="add-eligible-donor.html";
+  if (!validateEmail(email)) {
+    errEl.textContent = "Please enter a valid email address.";
+    errEl.style.display = "block";
+    return;
   }
-  
-  function goFindBlood(){
-    window.location.href="contact-network.html";
+  if (!consent) {
+    errEl.textContent = "Medical consent is required.";
+    errEl.style.display = "block";
+    return;
   }
-  
-  function goTrackDonor(){
-    window.location.href="ambulance-tracking.html";
-  }
-  function goAnalytics(){
-    window.location.href="analytics.html";
-  }
-  function goProfile(){
-    window.location.href="admin-profile.html";
-  }
-  
-  function logout(){
-    window.location.href="index.html";
-  }
-  
-  // Single addDonor function that navigates
-  function addDonor(){
-    window.location.href="donor-success.html";
-  }
-  
-  /* Set max date */
-  document.getElementById("lastDonation").max =
-    new Date().toISOString().split("T")[0];
-  
-  function validateEmail(email){
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-  
-  function checkDonationEligibility(date){
-    const last=new Date(date);
-    const today=new Date();
-    const diff=(today-last)/(1000*60*60*24);
-    return diff>=90;
+  if (lastDon && !checkDonationEligibility(lastDon)) {
+    errEl.textContent = "Donor must have last donated at least 90 days ago.";
+    errEl.style.display = "block";
+    return;
   }
 
+  const btn = document.getElementById("addBtn");
+  btn.textContent = "Adding…";
+  btn.disabled = true;
+
+  try {
+    const { error } = await supabaseClient.from("donors").insert({
+      name,
+      email,
+      phone,
+      gender,
+      blood_group: blood,
+      last_donation_date: lastDon || null,
+      is_available: true
+    });
+
+    if (error) throw error;
+
+    // Clear form
+    document.getElementById("name").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("gender").value = "";
+    document.getElementById("blood").value = "";
+    document.getElementById("lastDonation").value = "";
+    document.getElementById("medicalConsent").checked = false;
+
+    sucEl.textContent = "Donor added successfully!";
+    sucEl.style.display = "block";
+    setTimeout(() => sucEl.style.display = "none", 4000);
+
+  } catch(err) {
+    errEl.textContent = "Failed to add donor: " + (err.message || err);
+    errEl.style.display = "block";
+  } finally {
+    btn.textContent = "Add Donor";
+    btn.disabled = false;
+  }
+}
+
+/* ── CSV upload ── */
+const dropZone = document.getElementById("dropZone");
+const csvFile  = document.getElementById("csvFile");
+const csvResults = document.getElementById("csvResults");
+
+dropZone.addEventListener("dragover", e => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.classList.remove("dragover");
+});
+
+dropZone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  if (e.dataTransfer.files.length) {
+    processCSV(e.dataTransfer.files[0]);
+  }
+});
+
+csvFile.addEventListener("change", () => {
+  if (csvFile.files.length) processCSV(csvFile.files[0]);
+});
+
+async function processCSV(file) {
+  csvResults.innerHTML = "⏳ Processing CSV…";
+
+  try {
+    const text = await file.text();
+    const lines = text.trim().split("\n");
+    if (lines.length < 2) {
+      csvResults.innerHTML = "⚠️ CSV appears empty (need header + data rows).";
+      return;
+    }
+
+    const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+    const nameIdx   = headers.indexOf("name");
+    const emailIdx  = headers.indexOf("email");
+    const phoneIdx  = headers.indexOf("phone");
+    const genderIdx = headers.indexOf("gender");
+    const bloodIdx  = headers.findIndex(h => h.includes("blood"));
+    const dateIdx   = headers.findIndex(h => h.includes("donation") || h.includes("date"));
+
+    if (nameIdx === -1 || bloodIdx === -1) {
+      csvResults.innerHTML = "⚠️ CSV must have at least 'name' and 'blood_group' columns.";
+      return;
+    }
+
+    const donors = [];
+    let skipped = 0;
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(",").map(c => c.trim());
+      const name = cols[nameIdx];
+      const blood = cols[bloodIdx];
+
+      if (!name || !blood) { skipped++; continue; }
+
+      donors.push({
+        name,
+        email: emailIdx > -1 ? cols[emailIdx] : null,
+        phone: phoneIdx > -1 ? cols[phoneIdx] : null,
+        gender: genderIdx > -1 ? cols[genderIdx] : null,
+        blood_group: blood,
+        last_donation_date: dateIdx > -1 && cols[dateIdx] ? cols[dateIdx] : null,
+        is_available: true
+      });
+    }
+
+    if (!donors.length) {
+      csvResults.innerHTML = "⚠️ No valid rows found in CSV.";
+      return;
+    }
+
+    const { error } = await supabaseClient.from("donors").insert(donors);
+    if (error) throw error;
+
+    csvResults.innerHTML = `✅ Successfully added ${donors.length} donor(s).${skipped ? ` (${skipped} row(s) skipped)` : ""}`;
+
+  } catch(err) {
+    csvResults.innerHTML = "❌ CSV import failed: " + (err.message || err);
+  }
+}
 </script>
 
 </body>

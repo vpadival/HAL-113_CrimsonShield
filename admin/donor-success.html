@@ -55,13 +55,21 @@ body{
 <div class="success-card">
   <div class="success-icon">✅</div>
   <h2>Donor(s) Added Successfully</h2>
-  <p>Redirecting back...</p>
+  <p>Redirecting back…</p>
 </div>
 
+<!-- Supabase SDK + shared config + auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
 <script>
-setTimeout(()=>{
-  window.location.href="add-eligible-donor.html";
-},3500);
+/* ── Auth guard ── */
+requireAdminAuth();
+
+setTimeout(() => {
+  window.location.href = "add-eligible-donor.html";
+}, 3500);
 </script>
 
 </body>

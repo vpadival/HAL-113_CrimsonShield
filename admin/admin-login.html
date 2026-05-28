@@ -87,6 +87,12 @@
       box-shadow: 0 15px 35px rgba(220,38,38,0.6);
     }
 
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .back-link {
       text-align: center;
       margin-top: 1.5rem;
@@ -99,6 +105,16 @@
       text-decoration: none;
     }
 
+    .error-msg {
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: #fca5a5;
+      padding: 0.8rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -111,9 +127,9 @@
 
     <h2>🔐 Admin Login</h2>
 
-    <!-- form now simply navigates to admin-dashboard on submit (no supabase) -->
-    <form id="adminLoginForm" onsubmit="window.location.href = 'admin-dashboard.html'; return false;">
+    <div class="error-msg" id="errorMsg"></div>
 
+    <form id="adminLoginForm">
       <div class="input-group">
         <label>Email</label>
         <input type="email" id="adminEmail" placeholder="admin@crimson.com" required>
@@ -121,19 +137,65 @@
     
       <div class="input-group">
         <label>Password</label>
-        <input type="password" id="adminPassword" placeholder="Enter password">
+        <input type="password" id="adminPassword" placeholder="Enter password" required>
       </div>
     
-      <button type="submit" class="btn">Login as Admin</button>
-    
+      <button type="submit" class="btn" id="loginBtn">Login as Admin</button>
     </form>
 
     <div class="back-link">
-      <a href="index.html">← Back to Home</a>
+      <a href="../index.html">← Back to Home</a>
     </div>
 
   </div>
 
-  <!-- No Supabase script – login button acts as a direct link to dashboard -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-config.js"></script>
+
+  <script>
+  // Check if already authed
+  if (sessionStorage.getItem("crimson_admin_auth") === "true") {
+    window.location.href = "admin-dashboard.html";
+  }
+
+  document.getElementById("adminLoginForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById("loginBtn");
+    const errEl = document.getElementById("errorMsg");
+    errEl.style.display = "none";
+    btn.disabled = true;
+    btn.textContent = "Logging in…";
+
+    const email = document.getElementById("adminEmail").value.trim();
+    const password = document.getElementById("adminPassword").value;
+
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) {
+        errEl.textContent = error.message;
+        errEl.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Login as Admin";
+        return;
+      }
+
+      // Mark admin session
+      sessionStorage.setItem("crimson_admin_auth", "true");
+      window.location.href = "admin-dashboard.html";
+
+    } catch (err) {
+      errEl.textContent = "Network error. Please try again.";
+      errEl.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "Login as Admin";
+    }
+  });
+  </script>
+
 </body>
 </html>

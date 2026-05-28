@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Donor Profile · Crimson Shield</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Plus Jakarta Sans', sans-serif;
+}
+
+body{
+    background: linear-gradient(135deg, #0b1219, #151f2c);
+    color:#e2e8f0;
+    display:flex;
+    min-height:100vh;
+}
+
+/* Sidebar */
+.sidebar{
+    width:270px;
+    background: rgba(18,25,35,0.95);
+    border-right:1px solid rgba(220,38,38,0.2);
+    padding:2rem 1.5rem;
+    display:flex;
+    flex-direction:column;
+}
+
+.logo{
+    font-size:1.6rem;
+    font-weight:800;
+    margin-bottom:3rem;
+}
+
+.logo span{ color:#dc2626; }
+
+.nav button{
+    width:100%;
+    padding:1rem;
+    margin-bottom:1rem;
+    border:none;
+    border-radius:15px;
+    background:transparent;
+    color:#94a3b8;
+    text-align:left;
+    cursor:pointer;
+    transition:0.3s;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.nav button:hover,
+.nav button.active{
+    background: rgba(220,38,38,0.15);
+    color:white;
+    transform:translateX(5px);
+}
+
+.logout{
+    margin-top:auto;
+    background:#dc2626;
+    border:none;
+    padding:0.9rem;
+    border-radius:15px;
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+}
+
+/* Main */
+.main{
+    flex:1;
+    padding:3rem 5%;
+}
+
+.header{
+    margin-bottom:3rem;
+}
+
+.header h1{
+    font-size:2rem;
+    font-weight:800;
+}
+
+.profile-top{
+    display:flex;
+    align-items:center;
+    gap:2rem;
+    margin-bottom:3rem;
+}
+
+.avatar{
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    background: linear-gradient(145deg, #dc2626, #b91c1c);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:3rem;
+    font-weight:700;
+    color:white;
+    box-shadow:0 10px 30px rgba(220,38,38,0.4);
+}
+
+.profile-info h2{
+    font-size:1.5rem;
+    font-weight:700;
+}
+
+.profile-info p{
+    color:#94a3b8;
+    margin-top:5px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap:2rem;
+}
+
+.card{
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(15px);
+    padding:2rem;
+    border-radius:20px;
+    border:1px solid rgba(220,38,38,0.2);
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 15px 35px rgba(220,38,38,0.2);
+}
+
+.card i{
+    font-size:1.3rem;
+    color:#dc2626;
+    margin-bottom:1rem;
+}
+
+.card label{
+    display:block;
+    font-size:0.85rem;
+    color:#94a3b8;
+    margin-bottom:5px;
+}
+
+.card p{
+    font-size:1.1rem;
+    font-weight:600;
+}
+
+.edit-btn{
+    margin-top:3rem;
+    padding:1rem 2.5rem;
+    border:none;
+    border-radius:40px;
+    background: linear-gradient(145deg, #dc2626, #b91c1c);
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.edit-btn:hover{ transform:translateY(-2px); }
+
+/* Edit modal */
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    justify-content:center;
+    align-items:center;
+    z-index:100;
+}
+
+.modal-content{
+    background:#151f2c;
+    padding:2rem;
+    border-radius:20px;
+    width:90%;
+    max-width:420px;
+    border:1px solid rgba(220,38,38,0.3);
+}
+
+.modal-content h3{ margin-bottom:1.5rem; }
+
+.modal-content label{
+    display:block;
+    font-size:0.85rem;
+    color:#94a3b8;
+    margin-bottom:0.3rem;
+}
+
+.modal-content input{
+    width:100%;
+    padding:0.7rem;
+    margin-bottom:1rem;
+    border-radius:10px;
+    border:1px solid rgba(220,38,38,0.2);
+    background:#0b1219;
+    color:white;
+}
+
+.modal-buttons{
+    display:flex;
+    gap:1rem;
+}
+
+.modal-buttons button{
+    flex:1;
+    padding:0.7rem;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.btn-save{ background:#10b981; color:#0b1219; }
+.btn-cancel{ background:#374151; color:white; }
+
+.loading-text { color:#94a3b8; font-size:0.9rem; }
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <div>
+        <div class="logo">Crimson<span>Shield</span></div>
+        <div class="nav">
+            <button onclick="goDashboard()">Dashboard</button>
+            <button onclick="goEligibility()">Update Eligibility</button>
+            <button onclick="goRewards()">Rewards</button>
+            <button onclick="goFeedback()">Feedback</button>
+            <button class="active" onclick="goProfile()">Profile</button>
+          </div>
+    </div>
+    <button class="logout" onclick="logout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </button>
+</div>
+
+<div class="main">
+
+    <div class="header">
+        <h1>Donor Profile</h1>
+    </div>
+
+    <div class="profile-top">
+        <div class="avatar" id="avatarLetter">–</div>
+        <div class="profile-info">
+            <h2 id="profileName">Loading…</h2>
+            <p id="profileSubtitle"></p>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <i class="fa-solid fa-user"></i>
+            <label>Full Name</label>
+            <p id="fieldName">–</p>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-droplet"></i>
+            <label>Blood Group</label>
+            <p id="fieldBlood">–</p>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-phone"></i>
+            <label>Phone Number</label>
+            <p id="fieldPhone">–</p>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-envelope"></i>
+            <label>Email Address</label>
+            <p id="fieldEmail">–</p>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-venus-mars"></i>
+            <label>Gender</label>
+            <p id="fieldGender">–</p>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-heart-circle-check"></i>
+            <label>Status</label>
+            <p id="fieldStatus">–</p>
+        </div>
+    </div>
+
+    <button class="edit-btn" onclick="openModal()">Edit Profile</button>
+
+</div>
+
+<!-- Edit Modal -->
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <h3>Edit Profile</h3>
+    <label>Full Name</label>
+    <input type="text" id="editName">
+    <label>Phone</label>
+    <input type="tel" id="editPhone">
+    <label>Gender</label>
+    <input type="text" id="editGender">
+    <div class="modal-buttons">
+      <button class="btn-save" onclick="saveProfile()">Save</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+let currentProfile = null;
+let currentUserId = null;
+
+requireDonorAuth(function(session, profile) {
+  currentUserId = session.user.id;
+  currentProfile = profile;
+  renderProfile(profile, session.user.email);
+});
+
+function renderProfile(p, email) {
+  if (!p) {
+    document.getElementById("profileName").textContent = email;
+    return;
+  }
+
+  document.getElementById("avatarLetter").textContent = (p.name || "?")[0].toUpperCase();
+  document.getElementById("profileName").textContent = p.name || "—";
+  document.getElementById("profileSubtitle").textContent = (p.blood_group || "") + " Donor";
+  document.getElementById("fieldName").textContent = p.name || "—";
+  document.getElementById("fieldBlood").textContent = p.blood_group || "—";
+  document.getElementById("fieldPhone").textContent = p.phone || "—";
+  document.getElementById("fieldEmail").textContent = p.email || email || "—";
+  document.getElementById("fieldGender").textContent = p.gender || "—";
+  document.getElementById("fieldStatus").textContent = p.is_available ? "Available" : "Not Available";
+  document.getElementById("fieldStatus").style.color = p.is_available ? "#10b981" : "#f87171";
+
+  document.title = (p.name || "Donor") + "'s Profile · Crimson Shield";
+}
+
+function openModal() {
+  document.getElementById("editModal").style.display = "flex";
+  if (currentProfile) {
+    document.getElementById("editName").value = currentProfile.name || "";
+    document.getElementById("editPhone").value = currentProfile.phone || "";
+    document.getElementById("editGender").value = currentProfile.gender || "";
+  }
+}
+
+function closeModal() {
+  document.getElementById("editModal").style.display = "none";
+}
+
+async function saveProfile() {
+  const name = document.getElementById("editName").value.trim();
+  const phone = document.getElementById("editPhone").value.trim();
+  const gender = document.getElementById("editGender").value.trim();
+
+  if (!name) { alert("Name is required."); return; }
+
+  const { error } = await supabaseClient
+    .from("donors")
+    .update({ name: name, phone: phone, gender: gender })
+    .eq("user_id", currentUserId);
+
+  if (error) {
+    alert("Save failed: " + error.message);
+    return;
+  }
+
+  // Refresh
+  currentProfile.name = name;
+  currentProfile.phone = phone;
+  currentProfile.gender = gender;
+  renderProfile(currentProfile, currentProfile.email);
+  closeModal();
+}
+
+/* Navigation */
+function goDashboard(){ window.location.href="donor-dashboard.html"; }
+function goEligibility(){ window.location.href="update-health.html"; }
+function goRewards(){ window.location.href="donor-rewards.html"; }
+function goFeedback(){ window.location.href="donor-feedback.html"; }
+function goProfile(){ window.location.href="donor-profile.html"; }
+function logout(){ performLogout("../index.html"); }
+</script>
+
+</body>
+</html>

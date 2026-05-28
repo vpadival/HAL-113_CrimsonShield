@@ -168,6 +168,12 @@ body {
   font-size:0.85rem;
   color:#94a3b8;
 }
+
+.empty-state {
+  text-align:center;
+  padding:3rem;
+  color:#64748b;
+}
 </style>
 </head>
 <body>
@@ -178,7 +184,7 @@ body {
     <div class="nav">
       <button onclick="goDashboard()">Dashboard</button>
       <button onclick="goAddDonor()">Add Donor</button>
-      <button onclick="goFindBlood()">Find Blood</button>
+      <button class="active" onclick="goFindBlood()">Find Blood</button>
       <button onclick="goTrackDonor()">Track Donor</button>
       <button onclick="goAnalytics()">Analytics</button>
       <button onclick="goProfile()">Profile</button>
@@ -186,7 +192,7 @@ body {
   </div>
 
   <div class="sidebar-footer">
-    <button class="logout" onclick="logout()">Logout</button>
+    <button class="logout" onclick="performLogout('../index.html')">Logout</button>
   </div>
 </div>
 
@@ -197,12 +203,11 @@ body {
   </div>
 
   <div class="filter-section">
-    <input type="text" id="searchInput" placeholder="Search by name..." onkeyup="applyFilters()">
+    <input type="text" id="searchInput" placeholder="Search by name…" onkeyup="applyFilters()">
 
     <select id="typeFilter" onchange="applyFilters()">
       <option value="all">All Types</option>
       <option value="hospital">Hospitals</option>
-      <option value="bloodbank">Blood Banks</option>
       <option value="donor">Donors</option>
     </select>
 
@@ -211,158 +216,148 @@ body {
       <option value="O+">O+</option>
       <option value="O-">O-</option>
       <option value="A+">A+</option>
+      <option value="A-">A-</option>
       <option value="B+">B+</option>
+      <option value="B-">B-</option>
+      <option value="AB+">AB+</option>
+      <option value="AB-">AB-</option>
     </select>
 
     <select id="statusFilter" onchange="applyFilters()">
       <option value="all">All Availability</option>
       <option value="available">Available</option>
-      <option value="low">Low Stock</option>
       <option value="unavailable">Unavailable</option>
     </select>
   </div>
 
-  <div class="network-grid">
-
-    <div class="network-card" data-type="hospital" data-blood="O+" data-status="available">
-      <h3>CityCare Multispeciality Hospital</h3>
-      <p>📍 Bangalore</p>
-      <p>🩸 Blood Group: O+</p>
-      <p class="status available">Available</p>
-      <div class="actions">
-        <button class="btn btn-call">Call</button>
-        <button class="btn btn-email">Email</button>
-        <button class="btn btn-request" onclick="sendRequest(this)">Request</button>
-      </div>
-      <div class="response-message"></div>
-    </div>
-
-    <div class="network-card" data-type="bloodbank" data-blood="A+" data-status="low">
-      <h3>RedCross Blood Bank</h3>
-      <p>📍 Chennai</p>
-      <p>🩸 Blood Group: A+</p>
-      <p class="status low">Low Stock</p>
-      <div class="actions">
-        <button class="btn btn-call">Call</button>
-        <button class="btn btn-email">Email</button>
-        <button class="btn btn-request" onclick="sendRequest(this)">Request</button>
-      </div>
-      <div class="response-message"></div>
-    </div>
-
-    <div class="network-card" data-type="donor" data-blood="O-" data-status="available">
-      <h3>Rahul Sharma</h3>
-      <p>📍 Hyderabad</p>
-      <p>🩸 Blood Group: O-</p>
-      <p class="status available">Available</p>
-      <div class="actions">
-        <button class="btn btn-call">Call</button>
-        <button class="btn btn-email">Email</button>
-        <button class="btn btn-request" onclick="sendRequest(this)">Request</button>
-      </div>
-      <div class="response-message"></div>
-    </div>
-
-    <div class="network-card" data-type="hospital" data-blood="B+" data-status="unavailable">
-      <h3>Sunrise Medical Center</h3>
-      <p>📍 Mumbai</p>
-      <p>🩸 Blood Group: B+</p>
-      <p class="status unavailable">Unavailable</p>
-      <div class="actions">
-        <button class="btn btn-call">Call</button>
-        <button class="btn btn-email">Email</button>
-        <button class="btn btn-request" onclick="sendRequest(this)">Request</button>
-      </div>
-      <div class="response-message"></div>
-    </div>
-
-    <div class="network-card" data-type="bloodbank" data-blood="O+" data-status="available">
-      <h3>Lifeline Blood Bank</h3>
-      <p>📍 Coimbatore</p>
-      <p>🩸 Blood Group: O+</p>
-      <p class="status available">Available</p>
-      <div class="actions">
-        <button class="btn btn-call">Call</button>
-        <button class="btn btn-email">Email</button>
-        <button class="btn btn-request" onclick="sendRequest(this)">Request</button>
-      </div>
-      <div class="response-message"></div>
-    </div>
-
-    <div class="network-card" data-type="donor" data-blood="A+" data-status="available">
-      <h3>Priya Reddy</h3>
-      <p>📍 Mysore</p>
-      <p>🩸 Blood Group: A+</p>
-      <p class="status available">Available</p>
-      <div class="actions">
-        <button class="btn btn-call">Call</button>
-        <button class="btn btn-email">Email</button>
-        <button class="btn btn-request" onclick="sendRequest(this)">Request</button>
-      </div>
-      <div class="response-message"></div>
-    </div>
-
+  <div class="network-grid" id="networkGrid">
+    <div class="empty-state">Loading network…</div>
   </div>
 
 </div>
 
+<!-- Supabase SDK + shared config + auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
 <script>
-  function goDashboard(){
-    window.location.href="admin-dashboard.html";
-  }
-  
-  function goAddDonor(){
-    window.location.href="add-eligible-donor.html";
-  }
-  
-  function goFindBlood(){
-    window.location.href="contact-network.html";
-  }
-  
-  function goTrackDonor(){
-    window.location.href="ambulance-tracking.html";
-  }
-  function goAnalytics(){
-    window.location.href="analytics.html";
-  }
-  function goProfile(){
-    window.location.href="admin-profile.html";
-  }
-  
-  function logout(){
-    window.location.href="index.html";
-  }
+/* ── Navigation ── */
+function goDashboard()  { window.location.href="admin-dashboard.html"; }
+function goAddDonor()   { window.location.href="add-eligible-donor.html"; }
+function goFindBlood()  { window.location.href="contact-network.html"; }
+function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
+function goAnalytics()  { window.location.href="analytics.html"; }
+function goProfile()    { window.location.href="admin-profile.html"; }
 
+/* ── Auth guard ── */
+requireAdminAuth();
+
+/* ── Data store ── */
+let allCards = []; // { type, name, location, blood_group, phone, email, is_available, el }
+
+/* ── Build cards from Supabase ── */
+(async function loadNetwork() {
+  const grid = document.getElementById("networkGrid");
+  grid.innerHTML = "";
+
+  try {
+    // Load donors
+    const { data: donors } = await supabaseClient.from("donors").select("*");
+    if (donors) {
+      donors.forEach(d => {
+        const card = makeCard({
+          type: "donor",
+          name: d.name || "Unknown Donor",
+          location: d.city || d.address || "—",
+          blood_group: d.blood_group || "—",
+          phone: d.phone || "",
+          email: d.email || "",
+          is_available: d.is_available !== false
+        });
+        allCards.push(card);
+        grid.appendChild(card.el);
+      });
+    }
+
+    // Load hospitals
+    const { data: hospitals } = await supabaseClient.from("hospitals").select("*");
+    if (hospitals) {
+      hospitals.forEach(h => {
+        const card = makeCard({
+          type: "hospital",
+          name: h.name || "Unknown Hospital",
+          location: h.city || h.address || "—",
+          blood_group: h.blood_group || "All",
+          phone: h.phone || "",
+          email: h.email || "",
+          is_available: h.is_available !== false
+        });
+        allCards.push(card);
+        grid.appendChild(card.el);
+      });
+    }
+
+    if (!allCards.length) {
+      grid.innerHTML = '<div class="empty-state">No donors or hospitals found in the database.</div>';
+    }
+
+  } catch(err) {
+    console.error("Network load error:", err);
+    grid.innerHTML = '<div class="empty-state">Failed to load network data.</div>';
+  }
+})();
+
+function makeCard(info) {
+  const el = document.createElement("div");
+  el.className = "network-card";
+  el.dataset.type   = info.type;
+  el.dataset.blood  = info.blood_group;
+  el.dataset.status = info.is_available ? "available" : "unavailable";
+
+  const statusClass = info.is_available ? "available" : "unavailable";
+  const statusText  = info.is_available ? "Available" : "Unavailable";
+
+  el.innerHTML = `
+    <h3>${info.name}</h3>
+    <p>📍 ${info.location}</p>
+    <p>🩸 Blood Group: ${info.blood_group}</p>
+    ${info.phone ? `<p>📞 ${info.phone}</p>` : ""}
+    <p class="status ${statusClass}">${statusText}</p>
+    <div class="actions">
+      ${info.phone ? `<button class="btn btn-call" onclick="window.open('tel:${info.phone}')">Call</button>` : ""}
+      ${info.email ? `<button class="btn btn-email" onclick="window.open('mailto:${info.email}')">Email</button>` : ""}
+      <button class="btn btn-request" onclick="sendRequest(this)">Request</button>
+    </div>
+    <div class="response-message"></div>
+  `;
+
+  return { ...info, el };
+}
+
+/* ── Filters ── */
 function applyFilters() {
-  const searchValue = document.getElementById("searchInput").value.toLowerCase();
-  const typeValue = document.getElementById("typeFilter").value;
-  const bloodValue = document.getElementById("bloodFilter").value;
-  const statusValue = document.getElementById("statusFilter").value;
+  const search = document.getElementById("searchInput").value.toLowerCase();
+  const type   = document.getElementById("typeFilter").value;
+  const blood  = document.getElementById("bloodFilter").value;
+  const status = document.getElementById("statusFilter").value;
 
-  const cards = document.querySelectorAll(".network-card");
+  allCards.forEach(c => {
+    const matchSearch = c.name.toLowerCase().includes(search);
+    const matchType   = type   === "all" || c.type === type;
+    const matchBlood  = blood  === "all" || c.blood_group === blood;
+    const matchStatus = status === "all" || c.el.dataset.status === status;
 
-  cards.forEach(card => {
-    const name = card.querySelector("h3").innerText.toLowerCase();
-    const type = card.getAttribute("data-type");
-    const blood = card.getAttribute("data-blood");
-    const status = card.getAttribute("data-status");
-
-    const matchSearch = name.includes(searchValue);
-    const matchType = (typeValue === "all" || type === typeValue);
-    const matchBlood = (bloodValue === "all" || blood === bloodValue);
-    const matchStatus = (statusValue === "all" || status === statusValue);
-
-    card.style.display = (matchSearch && matchType && matchBlood && matchStatus)
-      ? "block"
-      : "none";
+    c.el.style.display = (matchSearch && matchType && matchBlood && matchStatus) ? "block" : "none";
   });
 }
 
+/* ── Request action ── */
 function sendRequest(button) {
-  const messageBox = button.closest(".network-card").querySelector(".response-message");
-  messageBox.innerHTML = "⏳ Request Sent... Waiting for response";
+  const msgBox = button.closest(".network-card").querySelector(".response-message");
+  msgBox.innerHTML = "⏳ Request Sent… Waiting for response";
   setTimeout(() => {
-    messageBox.innerHTML = "✅ Blood Reserved Successfully";
+    msgBox.innerHTML = "✅ Blood Reserved Successfully";
   }, 2000);
 }
 </script>

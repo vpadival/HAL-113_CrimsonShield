@@ -7,6 +7,9 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -20,7 +23,7 @@
       overflow-x: hidden;
     }
 
-    /* --- ANIMATION (pin + pulse) - REPOSITIONED NEXT TO HEADING --- */
+    /* --- ANIMATION (pin + pulse) --- */
     .header-animation {
       position: relative;
       display: inline-flex;
@@ -31,7 +34,7 @@
       height: 50px;
       pointer-events: none;
       z-index: 15;
-      transform: scale(0.9); /* Slightly smaller to fit better */
+      transform: scale(0.9);
     }
 
     .pin {
@@ -41,7 +44,7 @@
       background: #dc2626;
       position: absolute;
       transform: rotate(-45deg);
-      left: 10px; /* Position within the container */
+      left: 10px;
       top: 5px;
       box-shadow: 0 0 20px rgba(220,38,38,0.6);
       animation-name: bounce;
@@ -97,7 +100,7 @@
       100% { transform: translateY(0) rotate(-45deg); }
     }
 
-    /* --- SIDEBAR (higher z-index) --- */
+    /* --- SIDEBAR --- */
     .sidebar {
       width:260px;
       background:rgba(18,25,35,0.95);
@@ -149,7 +152,7 @@
       width:100%;
     }
 
-    /* MAIN (higher z-index) */
+    /* MAIN */
     .main {
       flex:1;
       padding:2rem;
@@ -157,7 +160,7 @@
       z-index: 10;
     }
 
-    /* HEADER - with flex to accommodate animation */
+    /* HEADER */
     .header {
       display:flex;
       align-items:center;
@@ -241,14 +244,24 @@
       color:white;
     }
 
-    .map-placeholder {
+    /* MAP */
+    .map-container {
       background:rgba(255,255,255,0.03);
-      border:1px dashed rgba(220,38,38,0.4);
+      border:1px solid rgba(220,38,38,0.2);
       border-radius:20px;
-      padding:3rem;
-      text-align:center;
+      overflow:hidden;
+      margin-bottom:1rem;
+    }
+
+    #map {
+      height: 500px;
+      width: 100%;
+    }
+
+    .donor-count {
+      padding:0.8rem 1.5rem;
       color:#94a3b8;
-      backdrop-filter: blur(2px);
+      font-size:0.85rem;
     }
 
   </style>
@@ -263,14 +276,14 @@
         <button onclick="goDashboard()">Dashboard</button>
         <button onclick="goAddDonor()">Add Donor</button>
         <button onclick="goFindBlood()">Find Blood</button>
-        <button onclick="goTrackDonor()">Track Donor</button>
+        <button class="active" onclick="goTrackDonor()">Track Donor</button>
         <button onclick="goAnalytics()">Analytics</button>
         <button onclick="goProfile()">Profile</button>
       </div>
     </div>
 
     <div class="sidebar-footer">
-      <button class="logout" onclick="logout()">Logout</button>
+      <button class="logout" onclick="performLogout('../index.html')">Logout</button>
     </div>
   </div>
 
@@ -280,7 +293,6 @@
     <div class="header">
       <h1>
         Live Ambulance Tracking
-        <!-- Animation placed right beside the heading -->
         <span class="header-animation">
           <span class='pin'></span>
           <span class='pulse'></span>
@@ -309,41 +321,36 @@
       <button class="btn btn-cancel" onclick="cancelRide()">Cancel Request</button>
     </div>
 
-    <!-- MAP PLACEHOLDER -->
-    
-    <div class="map-placeholder">
-      <div id="map" style="height: 600px; width: 100%; border-radius: 10px;"></div>
+    <!-- MAP: Available Donors -->
+    <h3 style="margin-bottom:1rem;">Available Donors on Map</h3>
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="donor-count" id="donorCount">Loading donors…</div>
     </div>
 
   </div>
 
-  <script>
-    function goDashboard(){
-      window.location.href="admin-dashboard.html";
-    }
-    
-    function goAddDonor(){
-      window.location.href="add-eligible-donor.html";
-    }
-    
-    function goFindBlood(){
-      window.location.href="contact-network.html";
-    }
-    
-    function goTrackDonor(){
-      window.location.href="ambulance-tracking.html";
-    }
-    function goAnalytics(){
-      window.location.href="analytics.html";
-    }
-    function goProfile(){
-      window.location.href="admin-profile.html";
-    }
-    
-    function logout(){
-      window.location.href="index.html";
-    }
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+  <!-- Supabase SDK + shared config + auth -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/auth.js"></script>
+
+  <script>
+    /* ── Navigation ── */
+    function goDashboard()  { window.location.href="admin-dashboard.html"; }
+    function goAddDonor()   { window.location.href="add-eligible-donor.html"; }
+    function goFindBlood()  { window.location.href="contact-network.html"; }
+    function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
+    function goAnalytics()  { window.location.href="analytics.html"; }
+    function goProfile()    { window.location.href="admin-profile.html"; }
+
+    /* ── Auth guard ── */
+    requireAdminAuth();
+
+    /* ── Ambulance simulation ── */
     let distance = 10;
     let eta = 15;
     let progress = 0;
@@ -353,9 +360,8 @@
         distance -= 1;
         eta -= 1;
         progress += 10;
-
         document.getElementById("distance").innerText = distance + " km";
-        document.getElementById("eta").innerText = eta + " mins";
+        document.getElementById("eta").innerText = Math.max(eta, 0) + " mins";
         document.getElementById("progressBar").style.width = progress + "%";
       }
     }
@@ -367,114 +373,62 @@
     }
 
     function callDriver() {
-      alert("Calling driver Arjun Mehta... (simulated)");
-    }
-  </script>
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-const supabaseUrl = "https://lkflnzxcbwlmxounerex.supabase.co";
-const supabaseKey = "sb_publishable_SqucPk5SOnBhLL6goXwxIQ_jDVlIy3x";
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-// Initialize map (default Bangalore)
-const map = L.map('map').setView([12.9716, 77.5946], 12);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
-let markers = [];
-
-async function loadDonors() {
-
-    const { data, error } = await supabaseClient
-        .from("donors")
-        .select("*")
-        .eq("is_available", true);
-
-    if (error) {
-        console.log("Error:", error);
-        return;
+      alert("Calling driver Arjun Mehta… (simulated)");
     }
 
-    // Remove old markers
-    markers.forEach(marker => map.removeLayer(marker));
-    markers = [];
+    /* ── Donor map (single map instance) ── */
+    const map = L.map('map').setView([12.9716, 77.5946], 12);
 
-    data.forEach(donor => {
-        if (donor.latitude && donor.longitude) {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
+    let markers = [];
+
+    async function loadDonors() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("donors")
+          .select("*")
+          .eq("is_available", true);
+
+        if (error) {
+          console.error("Map load error:", error);
+          return;
+        }
+
+        // Remove old markers
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+
+        let plotted = 0;
+
+        data.forEach(donor => {
+          if (donor.latitude && donor.longitude) {
             const marker = L.marker([donor.latitude, donor.longitude])
-                .addTo(map)
-                .bindPopup(`
-                    <strong>${donor.name}</strong><br>
-                    Blood Group: ${donor.blood_group}<br>
-                    Phone: ${donor.phone}
-                `);
-
+              .addTo(map)
+              .bindPopup(
+                `<strong>${donor.name}</strong><br>` +
+                `Blood Group: ${donor.blood_group}<br>` +
+                (donor.phone ? `Phone: ${donor.phone}` : "")
+              );
             markers.push(marker);
-        }
-    });
+            plotted++;
+          }
+        });
 
-    console.log("Loaded donors:", data.length);
-}
+        document.getElementById("donorCount").textContent =
+          `${data.length} available donor(s) found, ${plotted} shown on map`;
 
-// Load initially
-loadDonors();
-
-// Refresh every 10 seconds
-setInterval(loadDonors, 10000);
-
-</script>
-<script>
-
-let exactMap = L.map('exactMap').setView([12.9716, 77.5946], 15);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-}).addTo(exactMap);
-
-let exactMarker;
-
-async function loadExactLocation() {
-
-    const { data, error } = await supabaseClient
-        .from("donors")
-        .select("*")
-        .eq("is_available", true)
-        .limit(1);   // Show one donor for demo
-
-    if (error || !data.length) return;
-
-    const donor = data[0];
-
-    if (donor.latitude && donor.longitude) {
-
-        const latLng = [donor.latitude, donor.longitude];
-
-        exactMap.setView(latLng, 16);
-
-        if (exactMarker) {
-            exactMarker.setLatLng(latLng);
-        } else {
-            exactMarker = L.marker(latLng).addTo(exactMap)
-                .bindPopup(`<b>${donor.name}</b><br>Blood: ${donor.blood_group}`)
-                .openPopup();
-        }
+      } catch(err) {
+        console.error("Donor map error:", err);
+      }
     }
-}
 
-loadExactLocation();
-setInterval(loadExactLocation, 10000);
+    // Load initially + refresh every 15 seconds
+    loadDonors();
+    setInterval(loadDonors, 15000);
+  </script>
 
-</script>
 </body>
 </html>

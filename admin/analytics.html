@@ -37,28 +37,23 @@ body{
 }
 .logo span{color:#b91c1c;}
 
-.nav{display:flex;flex-direction:column;gap:0.5rem;}
-
-.nav-item{
-  padding:0.85rem 1rem;
+.nav button{
+  width:100%;
+  padding:1rem;
+  margin-bottom:1rem;
   border:none;
-  border-radius:12px;
+  border-radius:15px;
   background:transparent;
-  color:#9ca3af;
+  color:#94a3b8;
   text-align:left;
   cursor:pointer;
-  transition:0.25s;
+  transition:0.3s;
 }
 
-.nav-item:hover{
-  background:rgba(185,28,28,0.12);
+.nav button:hover,
+.nav button.active{
+  background:rgba(220,38,38,0.15);
   color:white;
-}
-
-.nav-item.active{
-  background:rgba(185,28,28,0.2);
-  color:white;
-  border-left:3px solid #b91c1c;
 }
 
 .logout{
@@ -128,24 +123,6 @@ body{
   margin-bottom:1rem;
   font-weight:600;
 }
-.nav button{
-  width:100%;
-  padding:1rem;
-  margin-bottom:1rem;
-  border:none;
-  border-radius:15px;
-  background:transparent;
-  color:#94a3b8;
-  text-align:left;
-  cursor:pointer;
-  transition:0.3s;
-}
-
-.nav button:hover,
-.nav button.active{
-  background:rgba(220,38,38,0.15);
-  color:white;
-}
 
 canvas{margin-top:0.5rem;}
 </style>
@@ -160,11 +137,11 @@ canvas{margin-top:0.5rem;}
       <button onclick="goAddDonor()">Add Donor</button>
       <button onclick="goFindBlood()">Find Blood</button>
       <button onclick="goTrackDonor()">Track Donor</button>
-      <button onclick="goAnalytics()">Analytics</button>
+      <button class="active" onclick="goAnalytics()">Analytics</button>
       <button onclick="goProfile()">Profile</button>
     </div>
   </div>
-  <button class="logout">Logout</button>
+  <button class="logout" onclick="performLogout('../index.html')">Logout</button>
 </div>
 
 <div class="main">
@@ -174,10 +151,10 @@ canvas{margin-top:0.5rem;}
   </div>
 
   <div class="stats">
-    <div class="stat-card"><h2>320</h2><p>Total Requests</p></div>
-    <div class="stat-card"><h2>280</h2><p>Successful Matches</p></div>
-    <div class="stat-card"><h2>145</h2><p>Active Donors</p></div>
-    <div class="stat-card"><h2>42</h2><p>Connected Hospitals</p></div>
+    <div class="stat-card"><h2 id="sTotalReq">…</h2><p>Total Requests</p></div>
+    <div class="stat-card"><h2 id="sFulfilled">…</h2><p>Successful Matches</p></div>
+    <div class="stat-card"><h2 id="sActiveDonors">…</h2><p>Active Donors</p></div>
+    <div class="stat-card"><h2 id="sPending">…</h2><p>Pending Requests</p></div>
   </div>
 
   <div class="charts">
@@ -201,99 +178,159 @@ canvas{margin-top:0.5rem;}
 
 </div>
 
+<!-- Supabase SDK + shared config + auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
 <script>
-  function goDashboard(){
-    window.location.href="admin-dashboard.html";
-  }
-  
-  function goAddDonor(){
-    window.location.href="add-eligible-donor.html";
-  }
-  
-  function goFindBlood(){
-    window.location.href="contact-network.html";
-  }
-  
-  function goTrackDonor(){
-    window.location.href="ambulance-tracking.html";
-  }
-  function goAnalytics(){
-    window.location.href="analytics.html";
-  }
-  function goProfile(){
-    window.location.href="admin-profile.html";
-  }
-  
-  function logout(){
-    window.location.href="index.html";
-  }
+/* ── Navigation ── */
+function goDashboard()  { window.location.href="admin-dashboard.html"; }
+function goAddDonor()   { window.location.href="add-eligible-donor.html"; }
+function goFindBlood()  { window.location.href="contact-network.html"; }
+function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
+function goAnalytics()  { window.location.href="analytics.html"; }
+function goProfile()    { window.location.href="admin-profile.html"; }
+
+/* ── Auth guard ── */
+requireAdminAuth();
+
+/* ── Chart palette ── */
 const gridColor = "rgba(255,255,255,0.05)";
 const textColor = "#9ca3af";
 
-/* LINE CHART */
-new Chart(document.getElementById("lineChart"),{
-  type:"line",
-  data:{
-    labels:["Jan","Feb","Mar","Apr","May","Jun"],
-    datasets:[{
-      label:"Requests",
-      data:[40,55,60,75,90,100],
-      borderColor:"#b91c1c",
-      backgroundColor:"rgba(185,28,28,0.15)",
-      fill:true,
-      tension:0.4,
-      pointBackgroundColor:"#b91c1c"
-    }]
-  },
-  options:{
-    plugins:{legend:{labels:{color:textColor}}},
-    scales:{
-      x:{ticks:{color:textColor},grid:{color:gridColor}},
-      y:{ticks:{color:textColor},grid:{color:gridColor}}
-    }
-  }
-});
+/* ── Load analytics data ── */
+(async function loadAnalytics() {
+  try {
+    /* ---- stat cards ---- */
+    const { count: totalReq } = await supabaseClient
+      .from("blood_requests").select("*", { count:"exact", head:true });
+    document.getElementById("sTotalReq").textContent = totalReq ?? 0;
 
-/* PIE CHART */
-new Chart(document.getElementById("pieChart"),{
-  type:"doughnut",
-  data:{
-    labels:["O+","A+","B+","O-"],
-    datasets:[{
-      data:[120,80,60,30],
-      backgroundColor:[
-        "#b91c1c",   // deep crimson
-        "#334155",   // slate
-        "#0f766e",   // muted teal
-        "#92400e"    // subtle amber
-      ],
-      borderWidth:0
-    }]
-  },
-  options:{
-    plugins:{legend:{labels:{color:textColor}}}
-  }
-});
+    const { count: fulfilled } = await supabaseClient
+      .from("blood_requests").select("*", { count:"exact", head:true })
+      .eq("status","fulfilled");
+    document.getElementById("sFulfilled").textContent = fulfilled ?? 0;
 
-/* BAR CHART */
-new Chart(document.getElementById("barChart"),{
-  type:"bar",
-  data:{
-    labels:["Pending","Approved","Rejected"],
-    datasets:[{
-      data:[40,280,20],
-      backgroundColor:"#334155",
-      borderRadius:6
-    }]
-  },
-  options:{
-    plugins:{legend:{display:false}},
-    scales:{
-      x:{ticks:{color:textColor},grid:{color:gridColor}},
-      y:{ticks:{color:textColor},grid:{color:gridColor}}
+    const { count: pending } = await supabaseClient
+      .from("blood_requests").select("*", { count:"exact", head:true })
+      .eq("status","pending");
+    document.getElementById("sPending").textContent = pending ?? 0;
+
+    const { count: activeDonors } = await supabaseClient
+      .from("donors").select("*", { count:"exact", head:true })
+      .eq("is_available", true);
+    document.getElementById("sActiveDonors").textContent = activeDonors ?? 0;
+
+    /* ---- Monthly line chart (last 6 months) ---- */
+    const { data: allReqs } = await supabaseClient
+      .from("blood_requests").select("created_at");
+
+    const monthCounts = {};
+    const now = new Date();
+    const labels = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toISOString().slice(0,7);
+      const label = d.toLocaleString("default",{month:"short"});
+      labels.push(label);
+      monthCounts[key] = 0;
     }
+
+    if (allReqs) {
+      allReqs.forEach(r => {
+        const key = (r.created_at || "").slice(0,7);
+        if (key in monthCounts) monthCounts[key]++;
+      });
+    }
+
+    new Chart(document.getElementById("lineChart"),{
+      type:"line",
+      data:{
+        labels: labels,
+        datasets:[{
+          label:"Requests",
+          data: Object.values(monthCounts),
+          borderColor:"#b91c1c",
+          backgroundColor:"rgba(185,28,28,0.15)",
+          fill:true,
+          tension:0.4,
+          pointBackgroundColor:"#b91c1c"
+        }]
+      },
+      options:{
+        plugins:{legend:{labels:{color:textColor}}},
+        scales:{
+          x:{ticks:{color:textColor},grid:{color:gridColor}},
+          y:{ticks:{color:textColor},grid:{color:gridColor}}
+        }
+      }
+    });
+
+    /* ---- Blood group pie chart ---- */
+    const { data: donors } = await supabaseClient
+      .from("donors").select("blood_group");
+
+    const groupCounts = {};
+    if (donors) {
+      donors.forEach(d => {
+        const g = d.blood_group || "Unknown";
+        groupCounts[g] = (groupCounts[g] || 0) + 1;
+      });
+    }
+
+    const pieLabels = Object.keys(groupCounts);
+    const pieData   = Object.values(groupCounts);
+    const pieColors = ["#b91c1c","#334155","#0f766e","#92400e","#6d28d9","#0369a1","#c2410c","#4d7c0f"];
+
+    new Chart(document.getElementById("pieChart"),{
+      type:"doughnut",
+      data:{
+        labels: pieLabels.length ? pieLabels : ["No data"],
+        datasets:[{
+          data: pieData.length ? pieData : [1],
+          backgroundColor: pieColors.slice(0, pieLabels.length || 1),
+          borderWidth:0
+        }]
+      },
+      options:{
+        plugins:{legend:{labels:{color:textColor}}}
+      }
+    });
+
+    /* ---- Request status bar chart ---- */
+    const statusLabels = ["pending","fulfilled","rejected","cancelled"];
+    const statusCounts = [];
+    for (const s of statusLabels) {
+      const { count } = await supabaseClient
+        .from("blood_requests").select("*", { count:"exact", head:true })
+        .eq("status", s);
+      statusCounts.push(count ?? 0);
+    }
+
+    new Chart(document.getElementById("barChart"),{
+      type:"bar",
+      data:{
+        labels: statusLabels.map(s => s.charAt(0).toUpperCase()+s.slice(1)),
+        datasets:[{
+          data: statusCounts,
+          backgroundColor:"#334155",
+          borderRadius:6
+        }]
+      },
+      options:{
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{color:textColor},grid:{color:gridColor}},
+          y:{ticks:{color:textColor},grid:{color:gridColor}}
+        }
+      }
+    });
+
+  } catch(err) {
+    console.error("Analytics load error:", err);
   }
-});
+})();
 </script>
 
 </body>

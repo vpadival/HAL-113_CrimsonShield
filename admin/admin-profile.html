@@ -36,35 +36,23 @@ body {
 }
 .logo span { color:#dc2626; }
 
-.nav {
-  display:flex;
-  flex-direction:column;
-  gap:0.5rem;
-}
-
-.nav-item {
+.nav button {
   width:100%;
-  padding:0.9rem 1rem;
+  padding:1rem;
+  margin-bottom:1rem;
   border:none;
   border-radius:15px;
   background:transparent;
   color:#94a3b8;
   text-align:left;
   cursor:pointer;
-  font-size:0.95rem;
-  transition:0.3s ease;
+  transition:0.3s;
 }
 
-.nav-item:hover {
+.nav button:hover,
+.nav button.active {
   background:rgba(220,38,38,0.15);
   color:white;
-  transform:translateX(4px);
-}
-
-.nav-item.active {
-  background:rgba(220,38,38,0.25);
-  color:white;
-  border-left:4px solid #dc2626;
 }
 
 .logout {
@@ -102,13 +90,18 @@ body {
   margin-bottom:2rem;
 }
 
-.profile-logo {
+.profile-avatar {
   width:140px;
   height:140px;
   border-radius:20px;
   border:3px solid #dc2626;
-  background:white;
-  object-fit:cover;
+  background:#1e293b;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:3.5rem;
+  font-weight:800;
+  color:#dc2626;
 }
 
 .profile-info h2 { margin-bottom:0.5rem; }
@@ -131,7 +124,8 @@ body {
 }
 
 .btn-edit { background:#3b82f6; color:white; }
-.btn-password { background:#f59e0b; color:#0b1219; }
+.btn-save { background:#10b981; color:#0b1219; }
+.btn-cancel { background:#64748b; color:white; }
 
 /* MODAL */
 .modal {
@@ -141,6 +135,7 @@ body {
   background:rgba(0,0,0,0.6);
   justify-content:center;
   align-items:center;
+  z-index:100;
 }
 
 .modal-content {
@@ -170,23 +165,19 @@ body {
   display:flex;
   justify-content:space-between;
 }
-.nav button{
-  width:100%;
-  padding:1rem;
+
+.error-msg {
+  color:#ef4444;
+  font-size:0.85rem;
   margin-bottom:1rem;
-  border:none;
-  border-radius:15px;
-  background:transparent;
-  color:#94a3b8;
-  text-align:left;
-  cursor:pointer;
-  transition:0.3s;
+  display:none;
 }
 
-.nav button:hover,
-.nav button.active{
-  background:rgba(220,38,38,0.15);
-  color:white;
+.success-msg {
+  color:#10b981;
+  font-size:0.85rem;
+  margin-bottom:1rem;
+  display:none;
 }
 </style>
 </head>
@@ -194,22 +185,18 @@ body {
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-
   <div>
     <div class="logo">Crimson<span>Shield</span></div>
-
     <div class="nav">
       <button onclick="goDashboard()">Dashboard</button>
       <button onclick="goAddDonor()">Add Donor</button>
       <button onclick="goFindBlood()">Find Blood</button>
       <button onclick="goTrackDonor()">Track Donor</button>
       <button onclick="goAnalytics()">Analytics</button>
-      <button onclick="goProfile()">Profile</button>
+      <button class="active" onclick="goProfile()">Profile</button>
     </div>
   </div>
-
-  <button class="logout" onclick="logout()">Logout</button>
-
+  <button class="logout" onclick="performLogout('../index.html')">Logout</button>
 </div>
 
 <!-- MAIN -->
@@ -219,15 +206,16 @@ body {
     <h1>Hospital Profile</h1>
   </div>
 
+  <div id="successMsg" class="success-msg">Profile updated successfully!</div>
+
   <div class="profile-card">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Hospital_icon.svg"
-         class="profile-logo">
+    <div class="profile-avatar" id="profileAvatar">H</div>
 
     <div class="profile-info">
-      <h2 id="hospitalName">CityCare Multispeciality Hospital</h2>
-      <p id="hospitalLocation">Bangalore, India</p>
-      <p id="hospitalEmail">contact@citycarehospital.com</p>
-      <p id="hospitalPhone">+91 98765 43210</p>
+      <h2 id="hospitalName">Loading…</h2>
+      <p id="hospitalLocation">—</p>
+      <p id="hospitalEmail">—</p>
+      <p id="hospitalPhone">—</p>
 
       <div class="profile-actions">
         <button class="btn btn-edit" onclick="openModal()">Edit Hospital Details</button>
@@ -241,73 +229,138 @@ body {
 <div class="modal" id="editModal">
   <div class="modal-content">
     <h3>Edit Hospital Details</h3>
+    <div id="editError" class="error-msg"></div>
     <input type="text" id="editName" placeholder="Hospital Name">
-    <input type="text" id="editLocation" placeholder="Location">
+    <input type="text" id="editLocation" placeholder="Location / City">
     <input type="email" id="editEmail" placeholder="Email">
     <input type="text" id="editPhone" placeholder="Phone">
 
     <div class="modal-buttons">
-      <button class="btn btn-edit" onclick="saveChanges()">Save</button>
-      <button class="btn btn-password" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-save" id="saveBtn" onclick="saveChanges()">Save</button>
+      <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
     </div>
   </div>
 </div>
 
+<!-- Supabase SDK + shared config + auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
 <script>
-  function goDashboard(){
-    window.location.href="admin-dashboard.html";
-  }
-  
-  function goAddDonor(){
-    window.location.href="add-eligible-donor.html";
-  }
-  
-  function goFindBlood(){
-    window.location.href="contact-network.html";
-  }
-  
-  function goTrackDonor(){
-    window.location.href="ambulance-tracking.html";
-  }
-  function goAnalytics(){
-    window.location.href="analytics.html";
-  }
-  function goProfile(){
-    window.location.href="admin-profile.html";
-  }
-  
-  function logout(){
-    window.location.href="index.html";
-  }
+/* ── Navigation ── */
+function goDashboard()  { window.location.href="admin-dashboard.html"; }
+function goAddDonor()   { window.location.href="add-eligible-donor.html"; }
+function goFindBlood()  { window.location.href="contact-network.html"; }
+function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
+function goAnalytics()  { window.location.href="analytics.html"; }
+function goProfile()    { window.location.href="admin-profile.html"; }
 
-function openModal(){
-  document.getElementById("editModal").style.display="flex";
+/* ── Auth guard ── */
+requireAdminAuth();
 
-  document.getElementById("editName").value =
-    document.getElementById("hospitalName").innerText;
-  document.getElementById("editLocation").value =
-    document.getElementById("hospitalLocation").innerText;
-  document.getElementById("editEmail").value =
-    document.getElementById("hospitalEmail").innerText;
-  document.getElementById("editPhone").value =
-    document.getElementById("hospitalPhone").innerText;
+let hospitalId = null;
+
+/* ── Load profile from hospitals table ── */
+(async function loadProfile() {
+  try {
+    const session = await getSession();
+    if (!session) return;
+
+    const { data, error } = await supabaseClient
+      .from("hospitals")
+      .select("*")
+      .eq("admin_user_id", session.user.id)
+      .single();
+
+    if (error || !data) {
+      // Fallback: try first hospital row
+      const { data: firstHosp } = await supabaseClient
+        .from("hospitals").select("*").limit(1).single();
+
+      if (firstHosp) renderProfile(firstHosp);
+      else {
+        document.getElementById("hospitalName").textContent = "No hospital profile found";
+      }
+      return;
+    }
+
+    renderProfile(data);
+  } catch(err) {
+    console.error("Profile load error:", err);
+  }
+})();
+
+function renderProfile(h) {
+  hospitalId = h.id;
+  document.getElementById("hospitalName").textContent     = h.name || "Unnamed Hospital";
+  document.getElementById("hospitalLocation").textContent = h.city || h.address || "—";
+  document.getElementById("hospitalEmail").textContent    = h.email || "—";
+  document.getElementById("hospitalPhone").textContent    = h.phone || "—";
+  document.getElementById("profileAvatar").textContent    = (h.name || "H").charAt(0).toUpperCase();
 }
 
-function closeModal(){
-  document.getElementById("editModal").style.display="none";
+/* ── Modal ── */
+function openModal() {
+  document.getElementById("editModal").style.display = "flex";
+  document.getElementById("editError").style.display = "none";
+  document.getElementById("editName").value     = document.getElementById("hospitalName").textContent;
+  document.getElementById("editLocation").value = document.getElementById("hospitalLocation").textContent === "—" ? "" : document.getElementById("hospitalLocation").textContent;
+  document.getElementById("editEmail").value    = document.getElementById("hospitalEmail").textContent === "—" ? "" : document.getElementById("hospitalEmail").textContent;
+  document.getElementById("editPhone").value    = document.getElementById("hospitalPhone").textContent === "—" ? "" : document.getElementById("hospitalPhone").textContent;
 }
 
-function saveChanges(){
-  document.getElementById("hospitalName").innerText =
-    document.getElementById("editName").value;
-  document.getElementById("hospitalLocation").innerText =
-    document.getElementById("editLocation").value;
-  document.getElementById("hospitalEmail").innerText =
-    document.getElementById("editEmail").value;
-  document.getElementById("hospitalPhone").innerText =
-    document.getElementById("editPhone").value;
+function closeModal() {
+  document.getElementById("editModal").style.display = "none";
+}
 
-  closeModal();
+async function saveChanges() {
+  const name     = document.getElementById("editName").value.trim();
+  const location = document.getElementById("editLocation").value.trim();
+  const email    = document.getElementById("editEmail").value.trim();
+  const phone    = document.getElementById("editPhone").value.trim();
+  const errEl    = document.getElementById("editError");
+
+  if (!name) {
+    errEl.textContent = "Hospital name is required.";
+    errEl.style.display = "block";
+    return;
+  }
+
+  const saveBtn = document.getElementById("saveBtn");
+  saveBtn.textContent = "Saving…";
+  saveBtn.disabled = true;
+
+  try {
+    if (hospitalId) {
+      const { error } = await supabaseClient
+        .from("hospitals")
+        .update({ name, city: location, email, phone })
+        .eq("id", hospitalId);
+
+      if (error) throw error;
+    }
+
+    // Update UI
+    document.getElementById("hospitalName").textContent     = name;
+    document.getElementById("hospitalLocation").textContent = location || "—";
+    document.getElementById("hospitalEmail").textContent    = email || "—";
+    document.getElementById("hospitalPhone").textContent    = phone || "—";
+    document.getElementById("profileAvatar").textContent    = name.charAt(0).toUpperCase();
+
+    closeModal();
+
+    const suc = document.getElementById("successMsg");
+    suc.style.display = "block";
+    setTimeout(() => suc.style.display = "none", 3000);
+
+  } catch(err) {
+    errEl.textContent = "Failed to save: " + (err.message || err);
+    errEl.style.display = "block";
+  } finally {
+    saveBtn.textContent = "Save";
+    saveBtn.disabled = false;
+  }
 }
 </script>
 

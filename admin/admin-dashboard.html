@@ -116,6 +116,10 @@ body {
   margin-top:0.5rem;
 }
 
+.loading-value {
+  color:#64748b;
+}
+
 /* PRIORITY BOX */
 .priority-box {
   background:rgba(220,38,38,0.1);
@@ -147,6 +151,43 @@ body {
   margin-top:0.5rem;
 }
 
+/* RECENT TABLE */
+.recent-section {
+  margin-top:2rem;
+}
+
+.recent-section h2 {
+  margin-bottom:1rem;
+}
+
+.recent-table {
+  width:100%;
+  border-collapse:collapse;
+}
+
+.recent-table th,
+.recent-table td {
+  padding:0.75rem 1rem;
+  text-align:left;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+.recent-table th {
+  color:#94a3b8;
+  font-size:0.8rem;
+  text-transform:uppercase;
+}
+
+.badge {
+  padding:0.2rem 0.6rem;
+  border-radius:10px;
+  font-size:0.75rem;
+  font-weight:600;
+}
+
+.badge-pending   { background:rgba(245,158,11,0.2); color:#f59e0b; }
+.badge-fulfilled { background:rgba(16,185,129,0.2); color:#10b981; }
+.badge-urgent    { background:rgba(239,68,68,0.2);  color:#ef4444; }
 </style>
 </head>
 <body>
@@ -156,7 +197,7 @@ body {
     <div class="logo">Crimson<span>Shield</span></div>
 
     <div class="nav">
-      <button onclick="goDashboard()">Dashboard</button>
+      <button class="active" onclick="goDashboard()">Dashboard</button>
       <button onclick="goAddDonor()">Add Donor</button>
       <button onclick="goFindBlood()">Find Blood</button>
       <button onclick="goTrackDonor()">Track Donor</button>
@@ -166,7 +207,7 @@ body {
   </div>
 
   <div class="sidebar-footer">
-    <button class="logout" onclick="logout()">Logout</button>
+    <button class="logout" onclick="performLogout('../index.html')">Logout</button>
   </div>
 </div>
 
@@ -180,64 +221,149 @@ body {
   <div class="stats">
     <div class="card">
       <h3>Active Emergencies</h3>
-      <div class="value">0</div>
+      <div class="value" id="statEmergencies"><span class="loading-value">…</span></div>
     </div>
     <div class="card">
       <h3>Total Donors</h3>
-      <div class="value">4</div>
+      <div class="value" id="statDonors"><span class="loading-value">…</span></div>
     </div>
     <div class="card">
-      <h3>Alerts Sent</h3>
-      <div class="value">0</div>
+      <h3>Pending Requests</h3>
+      <div class="value" id="statPending"><span class="loading-value">…</span></div>
     </div>
     <div class="card">
       <h3>Fulfilled Cases</h3>
-      <div class="value">0</div>
+      <div class="value" id="statFulfilled"><span class="loading-value">…</span></div>
     </div>
   </div>
 
-  <div class="priority-box">
-    🚨 <strong>High Priority:</strong> O- blood required at City Hospital (2 Units)
+  <div class="priority-box" id="priorityBox" style="display:none;">
+    🚨 <strong>High Priority:</strong> <span id="priorityText"></span>
   </div>
 
   <h2>Blood Stock Overview</h2>
-  <div class="stock-grid">
-    <div class="stock-card">O+ <span>24</span></div>
-    <div class="stock-card">O- <span>5</span></div>
-    <div class="stock-card">A+ <span>18</span></div>
-    <div class="stock-card">B+ <span>12</span></div>
+  <div class="stock-grid" id="stockGrid">
+    <!-- Populated dynamically -->
+  </div>
+
+  <div class="recent-section">
+    <h2>Recent Blood Requests</h2>
+    <table class="recent-table">
+      <thead>
+        <tr>
+          <th>Blood Group</th>
+          <th>Units</th>
+          <th>Hospital</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="recentBody">
+        <tr><td colspan="5" style="color:#64748b;">Loading…</td></tr>
+      </tbody>
+    </table>
   </div>
 
 </div>
 
+<!-- Supabase SDK + shared config + auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
+
 <script>
+/* ── Navigation ── */
+function goDashboard()  { window.location.href="admin-dashboard.html"; }
+function goAddDonor()   { window.location.href="add-eligible-donor.html"; }
+function goFindBlood()  { window.location.href="contact-network.html"; }
+function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
+function goAnalytics()  { window.location.href="analytics.html"; }
+function goProfile()    { window.location.href="admin-profile.html"; }
 
-function goDashboard(){
-  window.location.href="admin-dashboard.html";
-}
+/* ── Auth guard ── */
+requireAdminAuth();
 
-function goAddDonor(){
-  window.location.href="add-eligible-donor.html";
-}
+/* ── Load dashboard data ── */
+(async function loadDashboard() {
+  try {
+    // Total donors count
+    const { count: donorCount } = await supabaseClient
+      .from("donors").select("*", { count: "exact", head: true });
+    document.getElementById("statDonors").textContent = donorCount ?? 0;
 
-function goFindBlood(){
-  window.location.href="contact-network.html";
-}
+    // Pending requests
+    const { count: pendingCount } = await supabaseClient
+      .from("blood_requests").select("*", { count: "exact", head: true })
+      .eq("status", "pending");
+    document.getElementById("statEmergencies").textContent = pendingCount ?? 0;
+    document.getElementById("statPending").textContent = pendingCount ?? 0;
 
-function goTrackDonor(){
-  window.location.href="ambulance-tracking.html";
-}
-function goAnalytics(){
-  window.location.href="analytics.html";
-}
-function goProfile(){
-  window.location.href="admin-profile.html";
-}
+    // Fulfilled requests
+    const { count: fulfilledCount } = await supabaseClient
+      .from("blood_requests").select("*", { count: "exact", head: true })
+      .eq("status", "fulfilled");
+    document.getElementById("statFulfilled").textContent = fulfilledCount ?? 0;
 
-function logout(){
-  window.location.href="index.html";
-}
+    // Blood stock
+    const { data: stockData } = await supabaseClient
+      .from("blood_stock").select("*");
 
+    const stockGrid = document.getElementById("stockGrid");
+    if (stockData && stockData.length) {
+      stockGrid.innerHTML = stockData.map(s =>
+        `<div class="stock-card">${s.blood_group} <span>${s.units ?? 0}</span></div>`
+      ).join("");
+    } else {
+      // Fallback: show common groups with 0
+      const groups = ["O+","O-","A+","A-","B+","B-","AB+","AB-"];
+      stockGrid.innerHTML = groups.map(g =>
+        `<div class="stock-card">${g} <span>0</span></div>`
+      ).join("");
+    }
+
+    // Priority: show most urgent pending request
+    const { data: urgentReq } = await supabaseClient
+      .from("blood_requests").select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(1);
+
+    if (urgentReq && urgentReq.length) {
+      const r = urgentReq[0];
+      document.getElementById("priorityText").textContent =
+        `${r.blood_group} blood required${r.hospital ? " at " + r.hospital : ""} (${r.units ?? 1} Unit${(r.units ?? 1) > 1 ? "s" : ""})`;
+      document.getElementById("priorityBox").style.display = "block";
+    }
+
+    // Recent requests table
+    const { data: recentReqs } = await supabaseClient
+      .from("blood_requests").select("*")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    const tbody = document.getElementById("recentBody");
+    if (recentReqs && recentReqs.length) {
+      tbody.innerHTML = recentReqs.map(r => {
+        const statusClass = r.status === "fulfilled" ? "badge-fulfilled"
+                          : r.status === "pending"   ? "badge-pending"
+                          : "badge-urgent";
+        const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : "—";
+        return `<tr>
+          <td>${r.blood_group || "—"}</td>
+          <td>${r.units ?? 1}</td>
+          <td>${r.hospital || "—"}</td>
+          <td><span class="badge ${statusClass}">${r.status || "pending"}</span></td>
+          <td>${date}</td>
+        </tr>`;
+      }).join("");
+    } else {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:#64748b;">No requests yet</td></tr>';
+    }
+
+  } catch (err) {
+    console.error("Dashboard load error:", err);
+  }
+})();
 </script>
 
 </body>
