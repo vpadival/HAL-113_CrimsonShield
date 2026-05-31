@@ -2,8 +2,8 @@
     Crimson Shield · Supabase Configuration
     ============================================ */
 
-const SUPABASE_URL = "https://uvoiroyonzqqtegfekyu.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2b2lyb3lvbnpxcXRlZ2Zla3l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjk3MDYsImV4cCI6MjA5NTY0NTcwNn0.lejcUqNttB5jKT0-rwL6GuFEkazZWQhkY7BeqVQZKUI";
+const SUPABASE_URL = "https://uvoiroyonzqqtegfekyu.supabase.co"; //Replace with your actual Supabase URL
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2b2lyb3lvbnpxcXRlZ2Zla3l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjk3MDYsImV4cCI6MjA5NTY0NTcwNn0.lejcUqNttB5jKT0-rwL6GuFEkazZWQhkY7BeqVQZKUI";//Replace with your actual Supabase anon key (public API key)
 
 (function() {
     const script = document.createElement("script");
