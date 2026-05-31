@@ -250,13 +250,13 @@ function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
 function goAnalytics()  { window.location.href="analytics.html"; }
 function goProfile()    { window.location.href="admin-profile.html"; }
 
-/* ── Auth guard ── */
+/* ── Auth guard + Load network ── */
+onSupabaseReady(function() {
 requireAdminAuth();
 
 /* ── Data store ── */
-let allCards = []; // { type, name, location, blood_group, phone, email, is_available, el }
+let allCards = [];
 
-/* ── Build cards from Supabase ── */
 (async function loadNetwork() {
   const grid = document.getElementById("networkGrid");
   grid.innerHTML = "";
@@ -273,7 +273,8 @@ let allCards = []; // { type, name, location, blood_group, phone, email, is_avai
           blood_group: d.blood_group || "—",
           phone: d.phone || "",
           email: d.email || "",
-          is_available: d.is_available !== false
+          is_available: d.is_available !== false,
+          donor_id: d.user_id || d.id || ""
         });
         allCards.push(card);
         grid.appendChild(card.el);
@@ -307,13 +308,16 @@ let allCards = []; // { type, name, location, blood_group, phone, email, is_avai
     grid.innerHTML = '<div class="empty-state">Failed to load network data.</div>';
   }
 })();
+}); // onSupabaseReady
 
 function makeCard(info) {
   const el = document.createElement("div");
   el.className = "network-card";
-  el.dataset.type   = info.type;
-  el.dataset.blood  = info.blood_group;
-  el.dataset.status = info.is_available ? "available" : "unavailable";
+  el.dataset.type     = info.type;
+  el.dataset.blood    = info.blood_group;
+  el.dataset.status   = info.is_available ? "available" : "unavailable";
+  el.dataset.donorId  = info.donor_id || "";
+  el.dataset.donorName = info.name || "";
 
   const statusClass = info.is_available ? "available" : "unavailable";
   const statusText  = info.is_available ? "Available" : "Unavailable";
@@ -353,12 +357,32 @@ function applyFilters() {
 }
 
 /* ── Request action ── */
-function sendRequest(button) {
-  const msgBox = button.closest(".network-card").querySelector(".response-message");
-  msgBox.innerHTML = "⏳ Request Sent… Waiting for response";
-  setTimeout(() => {
+async function sendRequest(button) {
+  const card    = button.closest(".network-card");
+  const msgBox  = card.querySelector(".response-message");
+  const blood   = card.dataset.blood;
+  const donorId = card.dataset.donorId;
+
+  button.disabled = true;
+  msgBox.innerHTML = "⏳ Sending request...";
+
+  try {
+    const { error } = await supabaseClient
+      .from("blood_requests")
+      .insert([{
+        blood_group:   blood,
+        donor_id:      donorId || null,
+        status:        "pending",
+        urgency:       "urgent",
+        units:         1
+      }]);
+
+    if (error) throw error;
     msgBox.innerHTML = "✅ Blood Reserved Successfully";
-  }, 2000);
+  } catch(e) {
+    msgBox.innerHTML = "❌ Failed: " + e.message;
+    button.disabled = false;
+  }
 }
 </script>
 

@@ -192,14 +192,14 @@ function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
 function goAnalytics()  { window.location.href="analytics.html"; }
 function goProfile()    { window.location.href="admin-profile.html"; }
 
-/* ── Auth guard ── */
+/* ── Auth guard + Load analytics ── */
+onSupabaseReady(function() {
 requireAdminAuth();
 
 /* ── Chart palette ── */
 const gridColor = "rgba(255,255,255,0.05)";
 const textColor = "#9ca3af";
 
-/* ── Load analytics data ── */
 (async function loadAnalytics() {
   try {
     /* ---- stat cards ---- */
@@ -331,6 +331,7 @@ const textColor = "#9ca3af";
     console.error("Analytics load error:", err);
   }
 })();
+}); // onSupabaseReady
 </script>
 
 </body>

@@ -348,7 +348,11 @@
     function goProfile()    { window.location.href="admin-profile.html"; }
 
     /* ── Auth guard ── */
+    onSupabaseReady(function() {
     requireAdminAuth();
+    loadDonors();
+    setInterval(loadDonors, 15000);
+    }); // onSupabaseReady
 
     /* ── Ambulance simulation ── */
     let distance = 10;
@@ -426,8 +430,7 @@
     }
 
     // Load initially + refresh every 15 seconds
-    loadDonors();
-    setInterval(loadDonors, 15000);
+    // (now handled inside onSupabaseReady above)
   </script>
 
 </body>

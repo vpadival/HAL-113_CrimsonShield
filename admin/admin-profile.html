@@ -256,12 +256,12 @@ function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
 function goAnalytics()  { window.location.href="analytics.html"; }
 function goProfile()    { window.location.href="admin-profile.html"; }
 
-/* ── Auth guard ── */
+/* ── Auth guard + Load profile ── */
+onSupabaseReady(function() {
 requireAdminAuth();
 
 let hospitalId = null;
 
-/* ── Load profile from hospitals table ── */
 (async function loadProfile() {
   try {
     const session = await getSession();
@@ -290,6 +290,7 @@ let hospitalId = null;
     console.error("Profile load error:", err);
   }
 })();
+}); // onSupabaseReady
 
 function renderProfile(h) {
   hospitalId = h.id;

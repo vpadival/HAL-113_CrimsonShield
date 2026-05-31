@@ -302,7 +302,9 @@ function goAnalytics()  { window.location.href="analytics.html"; }
 function goProfile()    { window.location.href="admin-profile.html"; }
 
 /* ── Auth guard ── */
+onSupabaseReady(function() {
 requireAdminAuth();
+}); // onSupabaseReady
 
 /* ── Set max date ── */
 document.getElementById("lastDonation").max = new Date().toISOString().split("T")[0];

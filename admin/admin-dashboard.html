@@ -280,10 +280,9 @@ function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
 function goAnalytics()  { window.location.href="analytics.html"; }
 function goProfile()    { window.location.href="admin-profile.html"; }
 
-/* ── Auth guard ── */
+/* ── Auth guard + Load dashboard data ── */
+onSupabaseReady(function() {
 requireAdminAuth();
-
-/* ── Load dashboard data ── */
 (async function loadDashboard() {
   try {
     // Total donors count
@@ -364,6 +363,7 @@ requireAdminAuth();
     console.error("Dashboard load error:", err);
   }
 })();
+}); // onSupabaseReady
 </script>
 
 </body>
