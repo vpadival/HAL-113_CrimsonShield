@@ -10,142 +10,35 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 
-body{
-  font-family:'Plus Jakarta Sans',sans-serif;
-  background:linear-gradient(135deg,#0b1219 0%,#151f2c 100%);
-  color:#e2e8f0;
-  display:flex;
-  min-height:100vh;
-}
+body{ font-family:'Plus Jakarta Sans',sans-serif; background:linear-gradient(135deg,#0b1219 0%,#151f2c 100%); color:#e2e8f0; display:flex; min-height:100vh; }
 
-/* SIDEBAR */
-.sidebar{
-  width:260px;
-  background:rgba(18,25,35,0.95);
-  border-right:1px solid rgba(220,38,38,0.2);
-  padding:2rem 1.5rem;
-  display:flex;
-  flex-direction:column;
-}
-
-.logo{
-  font-size:1.6rem;
-  font-weight:800;
-  margin-bottom:3rem;
-}
+.sidebar{ width:260px; background:rgba(18,25,35,0.95); border-right:1px solid rgba(220,38,38,0.2); padding:2rem 1.5rem; display:flex; flex-direction:column; }
+.logo{ font-size:1.6rem; font-weight:800; margin-bottom:3rem; }
 .logo span{color:#dc2626;}
+.nav button{ width:100%; padding:1rem; margin-bottom:1rem; border:none; border-radius:15px; background:transparent; color:#94a3b8; text-align:left; cursor:pointer; transition:0.3s; font-weight:600; }
+.nav button:hover, .nav button.active{ background:rgba(220,38,38,0.15); color:white; }
+.logout{ margin-top:auto; background:#dc2626; border:none; padding:0.8rem; border-radius:15px; color:white; cursor:pointer; font-weight:600; }
 
-.nav button{
-  width:100%;
-  padding:1rem;
-  margin-bottom:1rem;
-  border:none;
-  border-radius:15px;
-  background:transparent;
-  color:#94a3b8;
-  text-align:left;
-  cursor:pointer;
-  transition:0.3s;
-}
+.main{ flex:1; padding:2rem; display:flex; justify-content:center; }
 
-.nav button:hover,
-.nav button.active{
-  background:rgba(220,38,38,0.15);
-  color:white;
-}
+.card{ background:rgba(255,255,255,0.03); border:1px solid rgba(220,38,38,0.2); border-radius:20px; padding:2rem; width:100%; max-width:700px; height:fit-content; }
+.card h2{ margin-bottom:1.5rem; }
 
-.logout{
-  margin-top:auto;
-  background:#dc2626;
-  border:none;
-  padding:0.8rem;
-  border-radius:15px;
-  color:white;
-  cursor:pointer;
-}
+label{ display:block; margin-bottom:0.5rem; color:#94a3b8; font-size:0.9rem; }
+select, textarea{ width:100%; padding:0.8rem; margin-bottom:1rem; border-radius:10px; border:1px solid rgba(220,38,38,0.2); background:rgba(0,0,0,0.3); color:white; font-family:inherit; }
+textarea{ min-height:120px; resize:none; }
 
-/* MAIN */
-.main{
-  flex:1;
-  padding:2rem;
-  display:flex;
-  justify-content:center;
-}
+.stars{ display:flex; gap:10px; font-size:1.8rem; cursor:pointer; margin-bottom:1rem; }
+.stars span{ color:#374151; transition:0.2s; }
+.stars span.active{ color:#fbbf24; }
 
-.card{
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(220,38,38,0.2);
-  border-radius:20px;
-  padding:2rem;
-  width:100%;
-  max-width:700px;
-}
+.btn{ background:linear-gradient(145deg,#dc2626,#b91c1c); color:white; padding:0.8rem 1.5rem; border:none; border-radius:30px; cursor:pointer; font-weight:600; display:block; margin:auto; }
+.btn:disabled{ opacity:0.6; cursor:not-allowed; }
 
-.card h2{
-  margin-bottom:1.5rem;
-}
+.note{ margin-top:1rem; text-align:center; font-size:0.85rem; color:#94a3b8; }
 
-label{
-  display:block;
-  margin-bottom:0.5rem;
-  color:#94a3b8;
-  font-size:0.9rem;
-}
-
-select, textarea{
-  width:100%;
-  padding:0.8rem;
-  margin-bottom:1rem;
-  border-radius:10px;
-  border:1px solid rgba(220,38,38,0.2);
-  background:rgba(0,0,0,0.3);
-  color:white;
-}
-
-textarea{
-  min-height:120px;
-  resize:none;
-}
-
-/* STAR RATING */
-.stars{
-  display:flex;
-  gap:10px;
-  font-size:1.8rem;
-  cursor:pointer;
-  margin-bottom:1rem;
-}
-
-.stars span{
-  color:#374151;
-  transition:0.2s;
-}
-
-.stars span.active{
-  color:#fbbf24;
-}
-
-.btn{
-  background:linear-gradient(145deg,#dc2626,#b91c1c);
-  color:white;
-  padding:0.8rem 1.5rem;
-  border:none;
-  border-radius:30px;
-  cursor:pointer;
-  font-weight:600;
-  display:block;
-  margin:auto;
-}
-
-.btn:hover{opacity:0.9;}
-
-.note{
-  margin-top:1rem;
-  text-align:center;
-  font-size:0.85rem;
-  color:#94a3b8;
-}
-
+.error-msg{ background:rgba(220,38,38,0.15); border:1px solid #dc2626; color:#fca5a5; padding:0.8rem 1rem; border-radius:10px; margin-bottom:1rem; display:none; }
+.success-msg{ background:rgba(16,185,129,0.15); border:1px solid #10b981; color:#6ee7b7; padding:1rem; border-radius:10px; text-align:center; display:none; }
 </style>
 </head>
 <body>
@@ -157,16 +50,19 @@ textarea{
       <button onclick="goDashboard()">Dashboard</button>
       <button onclick="goEligibility()">Update Eligibility</button>
       <button onclick="goRewards()">Rewards</button>
-      <button onclick="goFeedback()">Feedback</button>
+      <button class="active" onclick="goFeedback()">Feedback</button>
       <button onclick="goProfile()">Profile</button>
     </div>
   </div>
-  <button class="logout" onclick="logout()">Logout</button>
+  <button class="logout" onclick="performLogout()">Logout</button>
 </div>
 
 <div class="main">
   <div class="card">
     <h2>💬 Share Your Donation Experience</h2>
+
+    <div class="error-msg" id="errMsg"></div>
+    <div class="success-msg" id="successMsg">✅ Thank you for your valuable feedback!</div>
 
     <label>Rate Your Overall Experience</label>
     <div class="stars" id="stars">
@@ -180,53 +76,83 @@ textarea{
     <label>Donation Process</label>
     <select id="experience">
       <option value="">Select</option>
-      <option>Smooth & Quick</option>
-      <option>Average</option>
-      <option>Needs Improvement</option>
+      <option value="Smooth & Quick">Smooth &amp; Quick</option>
+      <option value="Average">Average</option>
+      <option value="Needs Improvement">Needs Improvement</option>
     </select>
 
     <label>Your Feedback</label>
     <textarea id="feedbackText" placeholder="Share your thoughts, suggestions, or concerns..."></textarea>
 
-    <button class="btn" onclick="submitFeedback()">Submit Feedback</button>
-
-    <div class="note">
-      Your feedback helps us improve donor experience.
-    </div>
+    <button class="btn" id="submitBtn" onclick="submitFeedback()">Submit Feedback</button>
+    <div class="note">Your feedback helps us improve donor experience.</div>
   </div>
 </div>
 
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
 <script>
+function goDashboard()  { window.location.href = "donor-dashboard.html"; }
+function goEligibility(){ window.location.href = "update-health.html"; }
+function goProfile()    { window.location.href = "donor-profile.html"; }
+function goRewards()    { window.location.href = "donor-rewards.html"; }
+function goFeedback()   { window.location.href = "donor-feedback.html"; }
 
 let selectedRating = 0;
+let currentUserId  = null;
 
-function rate(star){
-  selectedRating = star;
-  const stars = document.querySelectorAll("#stars span");
-  stars.forEach((s,index)=>{
-    s.classList.toggle("active", index < star);
-  });
+requireDonorAuth(function(session) {
+    currentUserId = session.user.id;
+});
+
+function rate(star) {
+    selectedRating = star;
+    document.querySelectorAll("#stars span").forEach(function(s, i) {
+        s.classList.toggle("active", i < star);
+    });
 }
 
-function submitFeedback(){
-  const experience = document.getElementById("experience").value;
-  const text = document.getElementById("feedbackText").value;
+async function submitFeedback() {
+    const experience = document.getElementById("experience").value;
+    const text       = document.getElementById("feedbackText").value.trim();
+    const errEl      = document.getElementById("errMsg");
+    const btn        = document.getElementById("submitBtn");
 
-  if(selectedRating === 0 || !experience){
-    alert("Please provide rating and select experience.");
-    return;
-  }
+    errEl.style.display = "none";
 
-  alert("Thank you for your valuable feedback!");
+    if (selectedRating === 0) { errEl.textContent = "Please select a star rating."; errEl.style.display = "block"; return; }
+    if (!experience)          { errEl.textContent = "Please select your experience."; errEl.style.display = "block"; return; }
+    if (!text)                { errEl.textContent = "Please write your feedback."; errEl.style.display = "block"; return; }
+
+    btn.disabled = true;
+    btn.textContent = "Submitting...";
+
+    try {
+        const { error } = await supabaseClient
+            .from("feedback")
+            .insert([{
+                user_id: currentUserId,
+                rating: selectedRating,
+                experience: experience,
+                comments: text
+            }]);
+
+        if (error) throw error;
+
+        document.getElementById("successMsg").style.display = "block";
+        document.getElementById("feedbackText").value = "";
+        document.getElementById("experience").value  = "";
+        selectedRating = 0;
+        document.querySelectorAll("#stars span").forEach(s => s.classList.remove("active"));
+        btn.textContent = "Submit Feedback";
+        btn.disabled = false;
+    } catch(e) {
+        errEl.textContent = "Error saving feedback: " + e.message;
+        errEl.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Submit Feedback";
+    }
 }
-
-function goDashboard(){ window.location.href="donor-dashboard.html"; }
-function goEligibility(){ window.location.href="update-health.html"; }
-function goProfile(){ window.location.href="donor-profile.html"; }
-function goRewards(){ window.location.href="donor-rewards.html"; }
-function logout(){ window.location.href="index.html"; }
-
 </script>
-
 </body>
 </html>

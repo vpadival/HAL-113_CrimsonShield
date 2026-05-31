@@ -10,131 +10,40 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 
-body{
-  font-family:'Plus Jakarta Sans',sans-serif;
-  background:linear-gradient(135deg,#0b1219 0%,#151f2c 100%);
-  color:#e2e8f0;
-  display:flex;
-  min-height:100vh;
-}
+body{ font-family:'Plus Jakarta Sans',sans-serif; background:linear-gradient(135deg,#0b1219 0%,#151f2c 100%); color:#e2e8f0; display:flex; min-height:100vh; }
 
-/* SIDEBAR */
-.sidebar{
-  width:260px;
-  background:rgba(18,25,35,0.95);
-  border-right:1px solid rgba(220,38,38,0.2);
-  padding:2rem 1.5rem;
-  display:flex;
-  flex-direction:column;
-}
-
-.logo{
-  font-size:1.6rem;
-  font-weight:800;
-  margin-bottom:3rem;
-}
+.sidebar{ width:260px; background:rgba(18,25,35,0.95); border-right:1px solid rgba(220,38,38,0.2); padding:2rem 1.5rem; display:flex; flex-direction:column; }
+.logo{ font-size:1.6rem; font-weight:800; margin-bottom:3rem; }
 .logo span{color:#dc2626;}
+.nav button{ width:100%; padding:1rem; margin-bottom:1rem; border:none; border-radius:15px; background:transparent; color:#94a3b8; text-align:left; cursor:pointer; transition:0.3s; font-weight:600; }
+.nav button:hover, .nav button.active{ background:rgba(220,38,38,0.15); color:white; }
+.logout{ margin-top:auto; background:#dc2626; border:none; padding:0.8rem; border-radius:15px; color:white; cursor:pointer; font-weight:600; }
 
-.nav button{
-  width:100%;
-  padding:1rem;
-  margin-bottom:1rem;
-  border:none;
-  border-radius:15px;
-  background:transparent;
-  color:#94a3b8;
-  text-align:left;
-  cursor:pointer;
-  transition:0.3s;
-}
+.main{ flex:1; padding:2rem; }
 
-.nav button:hover,
-.nav button.active{
-  background:rgba(220,38,38,0.15);
-  color:white;
-}
+.header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; flex-wrap:wrap; gap:1rem; }
+.badge{ padding:0.4rem 1rem; border-radius:20px; font-size:0.8rem; font-weight:600; }
+.badge.locked  { background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid #475569; }
+.badge.unlocked{ background:#10b981; color:#0b1219; }
 
-.logout{
-  margin-top:auto;
-  background:#dc2626;
-  border:none;
-  padding:0.8rem;
-  border-radius:15px;
-  color:white;
-  cursor:pointer;
-}
+.donation-count{ background:rgba(255,255,255,0.03); border:1px solid rgba(220,38,38,0.2); border-radius:16px; padding:1.2rem 1.5rem; margin-bottom:2rem; display:flex; align-items:center; gap:1rem; }
+.count-num{ font-size:2.5rem; font-weight:800; color:#dc2626; }
+.count-label{ color:#94a3b8; font-size:0.9rem; }
 
-/* MAIN */
-.main{
-  flex:1;
-  padding:2rem;
-}
+.rewards-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:1.5rem; }
 
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:2rem;
-}
+.reward-card{ background:rgba(255,255,255,0.03); border:1px solid rgba(220,38,38,0.2); border-radius:20px; padding:1.5rem; transition:0.3s; }
+.reward-card:hover{ transform:translateY(-5px); border-color:#dc2626; }
+.reward-card h3{ margin-bottom:0.5rem; }
+.reward-card p{ font-size:0.9rem; color:#94a3b8; margin-bottom:1rem; }
+.reward-card.locked-card{ opacity:0.5; pointer-events:none; }
 
-.badge{
-  background:#10b981;
-  padding:0.4rem 1rem;
-  border-radius:20px;
-  font-size:0.8rem;
-  color:#0b1219;
-  font-weight:600;
-}
-
-/* REWARD GRID */
-.rewards-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:1.5rem;
-}
-
-.reward-card{
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(220,38,38,0.2);
-  border-radius:20px;
-  padding:1.5rem;
-  transition:0.3s;
-}
-
-.reward-card:hover{
-  transform:translateY(-5px);
-  border-color:#dc2626;
-}
-
-.reward-card h3{
-  margin-bottom:0.5rem;
-}
-
-.reward-card p{
-  font-size:0.9rem;
-  color:#94a3b8;
-  margin-bottom:1rem;
-}
-
-.btn{
-  background:linear-gradient(145deg,#dc2626,#b91c1c);
-  color:white;
-  padding:0.6rem 1.2rem;
-  border:none;
-  border-radius:20px;
-  cursor:pointer;
-  font-weight:600;
-}
-
+.btn{ background:linear-gradient(145deg,#dc2626,#b91c1c); color:white; padding:0.6rem 1.2rem; border:none; border-radius:20px; cursor:pointer; font-weight:600; }
 .btn:hover{opacity:0.9;}
 
-.subsidy-box{
-  margin-top:2rem;
-  background:rgba(16,185,129,0.1);
-  border:1px solid #10b981;
-  padding:1.5rem;
-  border-radius:20px;
-}
+.subsidy-box{ margin-top:2rem; background:rgba(16,185,129,0.1); border:1px solid #10b981; padding:1.5rem; border-radius:20px; }
+
+.loading-text{ color:#64748b; font-style:italic; }
 </style>
 </head>
 <body>
@@ -145,76 +54,98 @@ body{
     <div class="nav">
       <button onclick="goDashboard()">Dashboard</button>
       <button onclick="goEligibility()">Update Eligibility</button>
-      <button onclick="goRewards()">Rewards</button>
+      <button class="active" onclick="goRewards()">Rewards</button>
       <button onclick="goFeedback()">Feedback</button>
       <button onclick="goProfile()">Profile</button>
     </div>
   </div>
-  <button class="logout" onclick="logout()">Logout</button>
+  <button class="logout" onclick="performLogout()">Logout</button>
 </div>
 
 <div class="main">
 
   <div class="header">
-    <h1>🎉 Donor Rewards & Benefits</h1>
-    <span class="badge">Unlocked after 1 Successful Donation</span>
+    <h1>🎉 Donor Rewards &amp; Benefits</h1>
+    <span class="badge locked" id="statusBadge">Loading...</span>
   </div>
 
-  <div class="rewards-grid">
+  <div class="donation-count">
+    <div class="count-num" id="donationCount">—</div>
+    <div class="count-label">Successful Donations</div>
+  </div>
 
-    <div class="reward-card">
-      <h3>🛒 15% Grocery Discount</h3>
-      <p>Valid at partnered supermarkets for 30 days.</p>
-      <button class="btn" onclick="redeem('Grocery Discount')">Redeem Coupon</button>
-    </div>
-
-    <div class="reward-card">
-      <h3>💊 20% Pharmacy Discount</h3>
-      <p>Applicable on medicines & health supplements.</p>
-      <button class="btn" onclick="redeem('Pharmacy Discount')">Redeem Coupon</button>
-    </div>
-
-    <div class="reward-card">
-      <h3>🛍 ₹500 Shopping Voucher</h3>
-      <p>Usable on selected online platforms.</p>
-      <button class="btn" onclick="redeem('Shopping Voucher')">Redeem Coupon</button>
-    </div>
-
-    <div class="reward-card">
-      <h3>🩺 Free Health Checkup</h3>
-      <p>Basic blood panel + consultation subsidy.</p>
-      <button class="btn" onclick="redeem('Health Checkup')">Claim Benefit</button>
-    </div>
-
+  <div class="rewards-grid" id="rewardsGrid">
+    <p class="loading-text">Loading rewards...</p>
   </div>
 
   <div class="subsidy-box">
     <h3>🏥 Government Subsidy Program</h3>
     <p>
-      As a registered voluntary donor, you are eligible for:
-      <br>• Priority emergency medical assistance
-      <br>• Subsidized insurance coverage
-      <br>• Annual wellness checkups
+      As a registered voluntary donor, you are eligible for:<br>
+      • Priority emergency medical assistance<br>
+      • Subsidized insurance coverage<br>
+      • Annual wellness checkups
     </p>
   </div>
 
 </div>
 
+<script src="../js/supabase-config.js"></script>
+<script src="../js/auth.js"></script>
 <script>
+function goDashboard()  { window.location.href = "donor-dashboard.html"; }
+function goEligibility(){ window.location.href = "update-health.html"; }
+function goProfile()    { window.location.href = "donor-profile.html"; }
+function goRewards()    { window.location.href = "donor-rewards.html"; }
+function goFeedback()   { window.location.href = "donor-feedback.html"; }
 
-function redeem(type){
-  alert(type + " successfully redeemed! Coupon sent to your email.");
+const REWARDS = [
+    { emoji: "🛒", title: "15% Grocery Discount",  desc: "Valid at partnered supermarkets for 30 days.",         threshold: 1 },
+    { emoji: "💊", title: "20% Pharmacy Discount", desc: "Applicable on medicines & health supplements.",        threshold: 1 },
+    { emoji: "🛍", title: "₹500 Shopping Voucher", desc: "Usable on selected online platforms.",                 threshold: 3 },
+    { emoji: "🩺", title: "Free Health Checkup",   desc: "Basic blood panel + consultation subsidy.",            threshold: 5 },
+];
+
+requireDonorAuth(async function(session) {
+    try {
+        const { count, error } = await supabaseClient
+            .from("blood_requests")
+            .select("id", { count: "exact", head: true })
+            .eq("donor_id", session.user.id)
+            .eq("status", "fulfilled");
+
+        const donations = error ? 0 : (count || 0);
+        document.getElementById("donationCount").textContent = donations;
+
+        const badge = document.getElementById("statusBadge");
+        if (donations >= 1) {
+            badge.textContent = "🏅 Rewards Unlocked";
+            badge.className = "badge unlocked";
+        } else {
+            badge.textContent = "🔒 Unlocked after 1 Successful Donation";
+            badge.className = "badge locked";
+        }
+
+        const grid = document.getElementById("rewardsGrid");
+        grid.innerHTML = REWARDS.map(function(r) {
+            const locked = donations < r.threshold;
+            return '<div class="reward-card' + (locked ? " locked-card" : "") + '">' +
+                '<h3>' + r.emoji + " " + r.title + '</h3>' +
+                '<p>' + r.desc + (r.threshold > 1 ? ' <em>(Requires ' + r.threshold + ' donations)</em>' : '') + '</p>' +
+                (locked
+                    ? '<button class="btn" disabled style="opacity:0.4;cursor:not-allowed;">🔒 Locked</button>'
+                    : '<button class="btn" onclick="redeem(\'' + r.title + '\')">Redeem Coupon</button>') +
+            '</div>';
+        }).join("");
+    } catch(e) {
+        document.getElementById("rewardsGrid").innerHTML = '<p class="loading-text">Could not load rewards.</p>';
+        console.error(e);
+    }
+});
+
+function redeem(type) {
+    alert(type + " successfully redeemed! Coupon sent to your email.");
 }
-
-/* ✅ UPDATED NAVIGATION */
-function goDashboard(){ window.location.href="donor-dashboard.html"; }
-function goEligibility(){ window.location.href="update-health.html"; }
-function goProfile(){ window.location.href="donor-profile.html"; }
-function goRewards(){ window.location.href="donor-rewards.html"; }
-function goFeedback(){ window.location.href="donor-feedback.html"; }
-function logout(){ window.location.href="index.html"; }
-
 </script>
-
 </body>
 </html>
