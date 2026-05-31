@@ -3,272 +3,157 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ambulance Tracking · Crimson Shield</title>
+  <title>Donor Dispatch · Crimson Shield</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
 
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: linear-gradient(135deg, #0b1219 0%, #151f2c 100%);
-      color:#e2e8f0;
-      display:flex;
-      min-height:100vh;
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    /* --- ANIMATION (pin + pulse) --- */
-    .header-animation {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-left: 15px;
-      width: 50px;
-      height: 50px;
-      pointer-events: none;
-      z-index: 15;
-      transform: scale(0.9);
-    }
-
-    .pin {
-      width: 30px;
-      height: 30px;
-      border-radius: 50% 50% 50% 0;
-      background: #dc2626;
-      position: absolute;
-      transform: rotate(-45deg);
-      left: 10px;
-      top: 5px;
-      box-shadow: 0 0 20px rgba(220,38,38,0.6);
-      animation-name: bounce;
-      animation-fill-mode: both;
-      animation-duration: 1s;
-    }
-
-    .pin:after {
-      content: '';
-      width: 14px;
-      height: 14px;
-      margin: 8px 0 0 8px;
-      background: #0b1219;
-      position: absolute;
-      border-radius: 50%;
-    }
-
-    .pulse {
-      background: rgba(220,38,38,0.2);
-      border-radius: 50%;
-      height: 14px;
-      width: 14px;
-      position: absolute;
-      left: 18px;
-      top: 13px;
-      transform: rotateX(55deg);
-      z-index: -2;
-    }
-
-    .pulse:after {
-      content: "";
-      border-radius: 50%;
-      height: 40px;
-      width: 40px;
-      position: absolute;
-      margin: -13px 0 0 -13px;
-      animation: pulsate 1s ease-out infinite;
-      opacity: 0.0;
-      box-shadow: 0 0 1px 2px #dc2626;
-      animation-delay: 1.1s;
-    }
-
-    @keyframes pulsate {
-      0% { transform: scale(0.1, 0.1); opacity: 0.0; }
-      50% { opacity: 1.0; }
-      100% { transform: scale(1.2, 1.2); opacity: 0; }
-    }
-
-    @keyframes bounce {
-      0% { opacity: 0; transform: translateY(-200px) rotate(-45deg); }
-      60% { opacity: 1; transform: translateY(10px) rotate(-45deg); }
-      80% { transform: translateY(-5px) rotate(-45deg); }
-      100% { transform: translateY(0) rotate(-45deg); }
-    }
-
-    /* --- SIDEBAR --- */
-    .sidebar {
-      width:260px;
-      background:rgba(18,25,35,0.95);
-      border-right:1px solid rgba(220,38,38,0.2);
-      padding:2rem 1.5rem;
-      display:flex;
-      flex-direction:column;
-      position: relative;
-      z-index: 10;
-    }
-
-    .logo {
-      font-size:1.6rem;
-      font-weight:800;
-      margin-bottom:3rem;
-    }
-    .logo span { color:#dc2626; }
-
-    .nav button {
-      width:100%;
-      padding:1rem;
-      margin-bottom:1rem;
-      border:none;
-      border-radius:15px;
-      background:transparent;
-      color:#94a3b8;
-      text-align:left;
-      cursor:pointer;
-      transition:0.3s;
-    }
-
-    .nav button:hover,
-    .nav button.active {
-      background:rgba(220,38,38,0.15);
-      color:white;
-    }
-
-    .sidebar-footer{
-      margin-top:auto;
-    }
-
-    .logout{
-      background:#dc2626;
-      border:none;
-      padding:0.8rem;
-      border-radius:15px;
-      color:white;
-      cursor:pointer;
-      width:100%;
-    }
-
-    /* MAIN */
-    .main {
-      flex:1;
-      padding:2rem;
-      position: relative;
-      z-index: 10;
-    }
-
-    /* HEADER */
-    .header {
-      display:flex;
-      align-items:center;
-      margin-bottom:2rem;
-    }
-
-    .header h1 {
-      font-size:1.8rem;
+      background: linear-gradient(135deg, #0b1219, #151f2c);
+      color: #e2e8f0;
       display: flex;
-      align-items: center;
+      min-height: 100vh;
     }
 
-    /* STATUS CARD */
-    .status-card {
-      background:rgba(255,255,255,0.03);
-      border:1px solid rgba(220,38,38,0.2);
-      border-radius:20px;
-      padding:2rem;
-      margin-bottom:2rem;
-      backdrop-filter: blur(2px);
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: rgba(18,25,35,0.95);
+      border-right: 1px solid rgba(220,38,38,0.2);
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
     }
-
-    .status-title {
-      font-size:1.2rem;
-      margin-bottom:1rem;
-      color:white;
+    .logo { font-size:1.6rem; font-weight:800; margin-bottom:3rem; }
+    .logo span { color: #dc2626; }
+    .nav button {
+      width:100%; padding:1rem; margin-bottom:1rem;
+      border:none; border-radius:15px; background:transparent;
+      color:#94a3b8; text-align:left; cursor:pointer; transition:0.3s; font-weight:600;
     }
+    .nav button:hover, .nav button.active { background:rgba(220,38,38,0.15); color:white; }
+    .logout { margin-top:auto; background:#dc2626; border:none; padding:0.8rem; border-radius:15px; color:white; cursor:pointer; font-weight:600; width:100%; }
 
-    .status-live {
-      color:#10b981;
-      font-weight:600;
+    /* Main */
+    .main { flex:1; padding:2rem; display:flex; flex-direction:column; gap:1.5rem; overflow:auto; }
+
+    .page-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+    .page-header h1 { font-size:1.8rem; font-weight:800; }
+
+    .refresh-btn {
+      padding:0.6rem 1.2rem; border:none; border-radius:20px;
+      background:rgba(220,38,38,0.2); color:#fca5a5; cursor:pointer; font-weight:600;
+      transition:0.2s;
     }
+    .refresh-btn:hover { background:rgba(220,38,38,0.4); }
 
-    /* PROGRESS BAR */
-    .progress-container {
-      background:rgba(255,255,255,0.05);
-      border-radius:20px;
-      overflow:hidden;
-      height:15px;
-      margin:1rem 0;
+    /* Stats row */
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; }
+    .stat-card {
+      background:rgba(255,255,255,0.03); border:1px solid rgba(220,38,38,0.2);
+      border-radius:16px; padding:1.2rem; text-align:center;
     }
+    .stat-card .num { font-size:2rem; font-weight:800; color:#dc2626; }
+    .stat-card .lbl { font-size:0.8rem; color:#94a3b8; margin-top:4px; }
 
-    .progress-bar {
-      height:100%;
-      width:0%;
-      background:linear-gradient(90deg,#dc2626,#b91c1c);
-      transition:width 1s linear;
+    /* Layout: map + list side by side */
+    .content-row { display:grid; grid-template-columns:1fr 380px; gap:1.5rem; }
+
+    /* Map */
+    .map-box {
+      background:rgba(255,255,255,0.03); border:1px solid rgba(220,38,38,0.2);
+      border-radius:20px; overflow:hidden;
     }
+    .map-box .map-header { padding:1rem 1.5rem; font-weight:700; border-bottom:1px solid rgba(220,38,38,0.1); }
+    #map { height:480px; width:100%; }
+    .map-footer { padding:0.8rem 1.5rem; color:#94a3b8; font-size:0.82rem; }
 
-    /* DRIVER INFO */
-    .driver-card {
-      background:rgba(255,255,255,0.03);
-      border:1px solid rgba(220,38,38,0.2);
-      border-radius:20px;
-      padding:1.5rem;
-      margin-bottom:2rem;
-      backdrop-filter: blur(2px);
+    /* Donor list */
+    .donor-list-box {
+      background:rgba(255,255,255,0.03); border:1px solid rgba(220,38,38,0.2);
+      border-radius:20px; overflow:hidden; display:flex; flex-direction:column;
     }
-
-    .driver-card h3 {
-      margin-bottom:0.5rem;
+    .donor-list-box .list-header {
+      padding:1rem 1.5rem; font-weight:700;
+      border-bottom:1px solid rgba(220,38,38,0.1);
+      display:flex; align-items:center; justify-content:space-between;
     }
+    .donor-scroll { flex:1; overflow-y:auto; max-height:480px; }
 
-    .btn {
-      padding:0.6rem 1rem;
-      border-radius:20px;
-      border:none;
-      cursor:pointer;
-      font-size:0.85rem;
-      font-weight:600;
-      margin-right:0.5rem;
+    .donor-item {
+      padding:1rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.04);
+      display:flex; align-items:center; gap:1rem; cursor:pointer; transition:0.2s;
     }
+    .donor-item:hover { background:rgba(220,38,38,0.07); }
+    .donor-item:last-child { border-bottom:none; }
 
-    .btn-call {
-      background:#10b981;
-      color:#0b1219;
+    .donor-avatar {
+      width:40px; height:40px; border-radius:50%;
+      background:linear-gradient(145deg,#dc2626,#b91c1c);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:1rem; flex-shrink:0;
     }
+    .donor-info { flex:1; min-width:0; }
+    .donor-info .dname { font-weight:600; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .donor-info .dmeta { font-size:0.78rem; color:#94a3b8; margin-top:2px; }
 
-    .btn-cancel {
-      background:#ef4444;
-      color:white;
+    .avail-badge {
+      font-size:0.7rem; font-weight:600; padding:3px 8px; border-radius:10px; flex-shrink:0;
     }
+    .avail-badge.yes { background:rgba(16,185,129,0.2); color:#6ee7b7; }
+    .avail-badge.no  { background:rgba(100,116,139,0.2); color:#94a3b8; }
 
-    /* MAP */
-    .map-container {
-      background:rgba(255,255,255,0.03);
-      border:1px solid rgba(220,38,38,0.2);
-      border-radius:20px;
-      overflow:hidden;
-      margin-bottom:1rem;
+    .dispatch-btn {
+      padding:0.4rem 0.8rem; border:none; border-radius:12px;
+      background:rgba(220,38,38,0.2); color:#fca5a5; cursor:pointer;
+      font-size:0.75rem; font-weight:600; flex-shrink:0; transition:0.2s;
     }
+    .dispatch-btn:hover { background:#dc2626; color:white; }
 
-    #map {
-      height: 500px;
-      width: 100%;
+    /* Pending requests */
+    .requests-box {
+      background:rgba(255,255,255,0.03); border:1px solid rgba(220,38,38,0.2);
+      border-radius:20px; overflow:hidden;
     }
-
-    .donor-count {
-      padding:0.8rem 1.5rem;
-      color:#94a3b8;
-      font-size:0.85rem;
+    .requests-box .req-header {
+      padding:1rem 1.5rem; font-weight:700;
+      border-bottom:1px solid rgba(220,38,38,0.1);
     }
+    .req-table { width:100%; border-collapse:collapse; }
+    .req-table th { padding:0.8rem 1.5rem; text-align:left; font-size:0.8rem; color:#94a3b8; font-weight:600; }
+    .req-table td { padding:0.8rem 1.5rem; border-top:1px solid rgba(255,255,255,0.04); font-size:0.88rem; }
+    .urgency-badge {
+      padding:3px 8px; border-radius:10px; font-size:0.72rem; font-weight:600;
+    }
+    .urgency-badge.urgent  { background:rgba(239,68,68,0.2); color:#fca5a5; }
+    .urgency-badge.normal  { background:rgba(59,130,246,0.2); color:#93c5fd; }
+    .status-pill {
+      padding:3px 10px; border-radius:10px; font-size:0.72rem; font-weight:600;
+    }
+    .status-pill.pending   { background:rgba(251,191,36,0.2); color:#fcd34d; }
+    .status-pill.fulfilled { background:rgba(16,185,129,0.2); color:#6ee7b7; }
 
+    .empty-state { padding:2rem; text-align:center; color:#64748b; font-size:0.9rem; }
+
+    /* Dispatch modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center; }
+    .modal { background:#151f2c; border:1px solid rgba(220,38,38,0.3); border-radius:20px; padding:2rem; width:90%; max-width:420px; }
+    .modal h3 { margin-bottom:1rem; }
+    .modal p { color:#94a3b8; font-size:0.9rem; margin-bottom:1.5rem; }
+    .modal-btns { display:flex; gap:1rem; }
+    .modal-btns button { flex:1; padding:0.8rem; border:none; border-radius:30px; cursor:pointer; font-weight:600; }
+    .btn-confirm { background:linear-gradient(145deg,#dc2626,#b91c1c); color:white; }
+    .btn-close   { background:rgba(255,255,255,0.1); color:white; }
+    .modal-msg   { margin-top:1rem; text-align:center; font-size:0.85rem; }
   </style>
 </head>
 <body>
 
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div>
       <div class="logo">Crimson<span>Shield</span></div>
@@ -276,161 +161,246 @@
         <button onclick="goDashboard()">Dashboard</button>
         <button onclick="goAddDonor()">Add Donor</button>
         <button onclick="goFindBlood()">Find Blood</button>
-        <button class="active" onclick="goTrackDonor()">Track Donor</button>
+        <button class="active">Track Donor</button>
         <button onclick="goAnalytics()">Analytics</button>
         <button onclick="goProfile()">Profile</button>
       </div>
     </div>
-
-    <div class="sidebar-footer">
-      <button class="logout" onclick="performLogout('../index.html')">Logout</button>
-    </div>
+    <button class="logout" onclick="performLogout('../index.html')">Logout</button>
   </div>
 
-  <!-- MAIN -->
   <div class="main">
 
-    <div class="header">
-      <h1>
-        Live Ambulance Tracking
-        <span class="header-animation">
-          <span class='pin'></span>
-          <span class='pulse'></span>
-        </span>
-      </h1>
+    <div class="page-header">
+      <h1>🗺️ Donor Dispatch &amp; Map</h1>
+      <button class="refresh-btn" onclick="refresh()">↺ Refresh</button>
     </div>
 
-    <!-- STATUS -->
-    <div class="status-card">
-      <div class="status-title">Current Status: <span class="status-live">On The Way</span></div>
-      <p>Distance Remaining: <strong id="distance">10 km</strong></p>
-      <p>Estimated Arrival: <strong id="eta">15 mins</strong></p>
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card"><div class="num" id="statTotal">—</div><div class="lbl">Total Donors</div></div>
+      <div class="stat-card"><div class="num" id="statAvail">—</div><div class="lbl">Available Now</div></div>
+      <div class="stat-card"><div class="num" id="statMapped">—</div><div class="lbl">Shown on Map</div></div>
+      <div class="stat-card"><div class="num" id="statPending">—</div><div class="lbl">Pending Requests</div></div>
+    </div>
 
-      <div class="progress-container">
-        <div class="progress-bar" id="progressBar"></div>
+    <!-- Map + Donor List -->
+    <div class="content-row">
+      <div class="map-box">
+        <div class="map-header">📍 Available Donors Near You</div>
+        <div id="map"></div>
+        <div class="map-footer" id="mapFooter">Loading donors…</div>
+      </div>
+
+      <div class="donor-list-box">
+        <div class="list-header">
+          <span>Available Donors</span>
+          <span id="availCount" style="color:#dc2626; font-size:0.85rem;">—</span>
+        </div>
+        <div class="donor-scroll" id="donorList">
+          <div class="empty-state">Loading…</div>
+        </div>
       </div>
     </div>
 
-    <!-- DRIVER INFO -->
-    <div class="driver-card">
-      <h3>Driver Details</h3>
-      <p>Name: Arjun Mehta</p>
-      <p>Vehicle No: KA-09-AB-1234</p>
-      <p>Contact: +91 98765 43210</p>
-      <button class="btn btn-call" onclick="callDriver()">📞 Call Driver</button>
-      <button class="btn btn-cancel" onclick="cancelRide()">Cancel Request</button>
-    </div>
-
-    <!-- MAP: Available Donors -->
-    <h3 style="margin-bottom:1rem;">Available Donors on Map</h3>
-    <div class="map-container">
-      <div id="map"></div>
-      <div class="donor-count" id="donorCount">Loading donors…</div>
+    <!-- Pending Requests -->
+    <div class="requests-box">
+      <div class="req-header">🚨 Pending Blood Requests</div>
+      <table class="req-table">
+        <thead>
+          <tr>
+            <th>Blood Group</th>
+            <th>Units</th>
+            <th>Urgency</th>
+            <th>Status</th>
+            <th>Raised At</th>
+          </tr>
+        </thead>
+        <tbody id="requestsTable">
+          <tr><td colspan="5" class="empty-state">Loading…</td></tr>
+        </tbody>
+      </table>
     </div>
 
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Dispatch Modal -->
+  <div class="modal-overlay" id="dispatchModal">
+    <div class="modal">
+      <h3>📤 Dispatch Donor</h3>
+      <p id="modalText">Send a blood request to this donor?</p>
+      <div class="modal-btns">
+        <button class="btn-close" onclick="closeModal()">Cancel</button>
+        <button class="btn-confirm" id="confirmBtn" onclick="confirmDispatch()">Confirm &amp; Send</button>
+      </div>
+      <div class="modal-msg" id="modalMsg"></div>
+    </div>
+  </div>
 
-  <!-- Supabase SDK + shared config + auth -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="../js/supabase-config.js"></script>
   <script src="../js/auth.js"></script>
-
   <script>
-    /* ── Navigation ── */
-    function goDashboard()  { window.location.href="admin-dashboard.html"; }
-    function goAddDonor()   { window.location.href="add-eligible-donor.html"; }
-    function goFindBlood()  { window.location.href="contact-network.html"; }
-    function goTrackDonor() { window.location.href="ambulance-tracking.html"; }
-    function goAnalytics()  { window.location.href="analytics.html"; }
-    function goProfile()    { window.location.href="admin-profile.html"; }
+    function goDashboard() { window.location.href = "admin-dashboard.html"; }
+    function goAddDonor()  { window.location.href = "add-eligible-donor.html"; }
+    function goFindBlood() { window.location.href = "contact-network.html"; }
+    function goAnalytics() { window.location.href = "analytics.html"; }
+    function goProfile()   { window.location.href = "admin-profile.html"; }
 
-    /* ── Auth guard ── */
-    onSupabaseReady(function() {
-    requireAdminAuth();
-    loadDonors();
-    setInterval(loadDonors, 15000);
-    }); // onSupabaseReady
-
-    /* ── Ambulance simulation ── */
-    let distance = 10;
-    let eta = 15;
-    let progress = 0;
-
-    function simulateTracking() {
-      if (distance > 0) {
-        distance -= 1;
-        eta -= 1;
-        progress += 10;
-        document.getElementById("distance").innerText = distance + " km";
-        document.getElementById("eta").innerText = Math.max(eta, 0) + " mins";
-        document.getElementById("progressBar").style.width = progress + "%";
-      }
-    }
-
-    setInterval(simulateTracking, 2000);
-
-    function cancelRide() {
-      alert("Ambulance request cancelled!");
-    }
-
-    function callDriver() {
-      alert("Calling driver Arjun Mehta… (simulated)");
-    }
-
-    /* ── Donor map (single map instance) ── */
     const map = L.map('map').setView([12.9716, 77.5946], 12);
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    let markers = [];
+    let markers    = [];
+    let selectedDonor = null;
+
+    onSupabaseReady(function() {
+      requireAdminAuth();
+      loadAll();
+      setInterval(loadAll, 20000);
+    });
+
+    async function loadAll() {
+      await Promise.all([loadDonors(), loadRequests()]);
+    }
+
+    function refresh() { loadAll(); }
 
     async function loadDonors() {
       try {
-        const { data, error } = await supabaseClient
-          .from("donors")
-          .select("*")
-          .eq("is_available", true);
+        const { data, error } = await window.supabaseClient
+          .from("donors").select("*");
+        if (error) throw error;
 
-        if (error) {
-          console.error("Map load error:", error);
-          return;
-        }
+        const available = data.filter(d => d.is_available);
+        document.getElementById("statTotal").textContent  = data.length;
+        document.getElementById("statAvail").textContent  = available.length;
+        document.getElementById("availCount").textContent = available.length + " available";
 
-        // Remove old markers
+        // Map markers
         markers.forEach(m => map.removeLayer(m));
         markers = [];
-
         let plotted = 0;
 
-        data.forEach(donor => {
-          if (donor.latitude && donor.longitude) {
-            const marker = L.marker([donor.latitude, donor.longitude])
+        available.forEach(function(d) {
+          if (d.latitude && d.longitude) {
+            const m = L.marker([d.latitude, d.longitude])
               .addTo(map)
               .bindPopup(
-                `<strong>${donor.name}</strong><br>` +
-                `Blood Group: ${donor.blood_group}<br>` +
-                (donor.phone ? `Phone: ${donor.phone}` : "")
+                "<strong>" + (d.name || "Donor") + "</strong><br>" +
+                "Blood: " + (d.blood_group || "—") + "<br>" +
+                (d.phone ? "📞 " + d.phone : "")
               );
-            markers.push(marker);
+            markers.push(m);
             plotted++;
           }
         });
 
-        document.getElementById("donorCount").textContent =
-          `${data.length} available donor(s) found, ${plotted} shown on map`;
+        document.getElementById("statMapped").textContent = plotted;
+        document.getElementById("mapFooter").textContent  =
+          available.length + " available donor(s), " + plotted + " shown on map";
 
-      } catch(err) {
-        console.error("Donor map error:", err);
+        // Donor list
+        const list = document.getElementById("donorList");
+        if (!available.length) {
+          list.innerHTML = '<div class="empty-state">No available donors right now.</div>';
+          return;
+        }
+        list.innerHTML = available.map(function(d) {
+          return '<div class="donor-item">' +
+            '<div class="donor-avatar">' + (d.name || "?")[0].toUpperCase() + '</div>' +
+            '<div class="donor-info">' +
+              '<div class="dname">' + (d.name || "Unknown") + '</div>' +
+              '<div class="dmeta">🩸 ' + (d.blood_group || "—") + (d.phone ? " · " + d.phone : "") + '</div>' +
+            '</div>' +
+            '<span class="avail-badge yes">Available</span>' +
+            '<button class="dispatch-btn" onclick=\'openDispatch(' + JSON.stringify({name: d.name, blood: d.blood_group, uid: d.user_id}) + ')\'>Dispatch</button>' +
+          '</div>';
+        }).join("");
+
+      } catch(e) {
+        console.error("Donor load error:", e);
       }
     }
 
-    // Load initially + refresh every 15 seconds
-    // (now handled inside onSupabaseReady above)
+    async function loadRequests() {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from("blood_requests")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(10);
+        if (error) throw error;
+
+        const pending = data.filter(r => r.status === "pending").length;
+        document.getElementById("statPending").textContent = pending;
+
+        const tbody = document.getElementById("requestsTable");
+        if (!data.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No requests yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.map(function(r) {
+          const date = new Date(r.created_at).toLocaleString("en-IN", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" });
+          return '<tr>' +
+            '<td><strong>' + (r.blood_group || "—") + '</strong></td>' +
+            '<td>' + (r.units || 1) + '</td>' +
+            '<td><span class="urgency-badge ' + (r.urgency === "urgent" ? "urgent" : "normal") + '">' + (r.urgency || "normal") + '</span></td>' +
+            '<td><span class="status-pill ' + r.status + '">' + r.status + '</span></td>' +
+            '<td>' + date + '</td>' +
+          '</tr>';
+        }).join("");
+
+      } catch(e) {
+        console.error("Requests load error:", e);
+      }
+    }
+
+    function openDispatch(donor) {
+      selectedDonor = donor;
+      document.getElementById("modalText").textContent =
+        "Create a blood request for " + (donor.name || "this donor") + " (" + (donor.blood || "—") + ")?";
+      document.getElementById("modalMsg").textContent = "";
+      document.getElementById("confirmBtn").disabled  = false;
+      document.getElementById("dispatchModal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("dispatchModal").style.display = "none";
+      selectedDonor = null;
+    }
+
+    async function confirmDispatch() {
+      if (!selectedDonor) return;
+      const btn = document.getElementById("confirmBtn");
+      const msg = document.getElementById("modalMsg");
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+
+      try {
+        const { error } = await window.supabaseClient
+          .from("blood_requests")
+          .insert([{
+            blood_group: selectedDonor.blood || null,
+            status:      "pending",
+            urgency:     "urgent",
+            units:       1
+          }]);
+
+        if (error) throw error;
+        msg.style.color = "#6ee7b7";
+        msg.textContent = "✅ Request created successfully!";
+        loadRequests();
+        setTimeout(closeModal, 1500);
+      } catch(e) {
+        msg.style.color = "#fca5a5";
+        msg.textContent = "❌ Failed: " + e.message;
+        btn.disabled = false;
+        btn.textContent = "Confirm & Send";
+      }
+    }
   </script>
 
 </body>
