@@ -1,13 +1,16 @@
 /*  ============================================
     Crimson Shield · Supabase Configuration
-    ============================================
-    Single source of truth for Supabase client.
-    Every page imports this instead of duplicating
-    the URL / key inline.
     ============================================ */
 
 const SUPABASE_URL = "https://uvoiroyonzqqtegfekyu.supabase.co";
-const SUPABASE_KEY = "sb_publishable_dgK8z3sBV9OOHShP9Fceww_HG4QlJpf";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2b2lyb3lvbnpxcXRlZ2Zla3l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjk3MDYsImV4cCI6MjA5NTY0NTcwNn0.lejcUqNttB5jKT0-rwL6GuFEkazZWQhkY7BeqVQZKUI";
 
-// supabase-js must be loaded before this file
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+(function() {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+    script.onload = function() {
+        window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        document.dispatchEvent(new Event("supabaseReady"));
+    };
+    document.head.appendChild(script);
+})();
