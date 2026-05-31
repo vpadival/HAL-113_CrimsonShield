@@ -329,7 +329,6 @@ async function sendRequest(button) {
       .from("blood_requests")
       .insert([{
         blood_group: blood,
-        donor_id:    donorId || null,
         status:      "pending",
         urgency:     "urgent",
         units:       1
