@@ -1,13 +1,15 @@
 /*  ============================================
     Crimson Shield · Auth Helpers
-    ============================================
-    Provides:
-      - getSession()      → current Supabase session or null
-      - getDonorProfile() → donor row from `donors` table
-      - requireDonorAuth(callback) → guard: redirects to login if not authed
-      - requireAdminAuth()         → guard: checks admin flag in localStorage
-      - logout()          → signs out + clears storage + redirects
     ============================================ */
+
+/* Wait for supabaseClient to be ready before running any auth */
+function onSupabaseReady(fn) {
+  if (window.supabaseClient) {
+    fn();
+  } else {
+    document.addEventListener("supabaseReady", fn, { once: true });
+  }
+}
 
 /* ---------- session helpers ---------- */
 
@@ -29,34 +31,26 @@ async function getDonorProfile(userId) {
 
 /* ---------- route guards ---------- */
 
-/**
- * Donor-side auth guard.
- * If user is authenticated, calls `callback(session, profile)`.
- * Otherwise redirects to donor login.
- * `basePath` is used when the page lives in a sub-folder.
- */
-async function requireDonorAuth(callback, basePath) {
+function requireDonorAuth(callback, basePath) {
   basePath = basePath || "";
-  const session = await getSession();
-  if (!session) {
-    window.location.href = basePath + "user-login.html";
-    return;
-  }
-  const profile = await getDonorProfile(session.user.id);
-  callback(session, profile);
+  onSupabaseReady(async function() {
+    const session = await getSession();
+    if (!session) {
+      window.location.href = basePath + "user-login.html";
+      return;
+    }
+    const profile = await getDonorProfile(session.user.id);
+    callback(session, profile);
+  });
 }
 
-/**
- * Admin-side auth guard.
- * Admin authentication is stored as a flag in sessionStorage
- * after successful Supabase sign-in on admin-login.
- * If missing, redirect to admin login.
- */
 function requireAdminAuth(basePath) {
   basePath = basePath || "";
-  if (sessionStorage.getItem("crimson_admin_auth") !== "true") {
-    window.location.href = basePath + "admin-login.html";
-  }
+  onSupabaseReady(function() {
+    if (sessionStorage.getItem("crimson_admin_auth") !== "true") {
+      window.location.href = basePath + "admin-login.html";
+    }
+  });
 }
 
 /* ---------- logout ---------- */
