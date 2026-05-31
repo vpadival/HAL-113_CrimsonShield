@@ -308,7 +308,40 @@ let allCards = [];
     grid.innerHTML = '<div class="empty-state">Failed to load network data.</div>';
   }
 })();
+
 }); // onSupabaseReady
+
+/* ── Request action (global, called from onclick) ── */
+async function sendRequest(button) {
+  const card    = button.closest(".network-card");
+  const msgBox  = card.querySelector(".response-message");
+  const blood   = card.dataset.blood;
+  const donorId = card.dataset.donorId;
+
+  button.disabled = true;
+  msgBox.innerHTML = "⏳ Sending request...";
+
+  try {
+    const client = window.supabaseClient;
+    if (!client) throw new Error("Supabase not ready, please try again.");
+
+    const { error } = await client
+      .from("blood_requests")
+      .insert([{
+        blood_group: blood,
+        donor_id:    donorId || null,
+        status:      "pending",
+        urgency:     "urgent",
+        units:       1
+      }]);
+
+    if (error) throw error;
+    msgBox.innerHTML = "✅ Blood Reserved Successfully";
+  } catch(e) {
+    msgBox.innerHTML = "❌ Failed: " + e.message;
+    button.disabled = false;
+  }
+}
 
 function makeCard(info) {
   const el = document.createElement("div");
@@ -356,34 +389,7 @@ function applyFilters() {
   });
 }
 
-/* ── Request action ── */
-async function sendRequest(button) {
-  const card    = button.closest(".network-card");
-  const msgBox  = card.querySelector(".response-message");
-  const blood   = card.dataset.blood;
-  const donorId = card.dataset.donorId;
 
-  button.disabled = true;
-  msgBox.innerHTML = "⏳ Sending request...";
-
-  try {
-    const { error } = await supabaseClient
-      .from("blood_requests")
-      .insert([{
-        blood_group:   blood,
-        donor_id:      donorId || null,
-        status:        "pending",
-        urgency:       "urgent",
-        units:         1
-      }]);
-
-    if (error) throw error;
-    msgBox.innerHTML = "✅ Blood Reserved Successfully";
-  } catch(e) {
-    msgBox.innerHTML = "❌ Failed: " + e.message;
-    button.disabled = false;
-  }
-}
 </script>
 
 </body>
